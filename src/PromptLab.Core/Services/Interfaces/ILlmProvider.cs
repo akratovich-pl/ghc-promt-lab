@@ -1,63 +1,41 @@
 using PromptLab.Core.Domain.Enums;
+using PromptLab.Core.DTOs;
 
 namespace PromptLab.Core.Services.Interfaces;
 
 /// <summary>
-/// Interface for LLM provider implementations
+/// Defines the contract for LLM provider implementations.
+/// Providers implement this interface to integrate with different LLM APIs (Google Gemini, OpenAI, etc.).
 /// </summary>
 public interface ILlmProvider
 {
     /// <summary>
-    /// Gets the provider type
+    /// Gets the name of the LLM provider (e.g., "Google Gemini", "OpenAI").
     /// </summary>
-    AiProvider Provider { get; }
+    string ProviderName { get; }
 
     /// <summary>
-    /// Gets available models for this provider
+    /// Generates text content using the LLM based on the provided request.
     /// </summary>
-    Task<IEnumerable<string>> GetAvailableModelsAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Checks if the provider is available and configured
-    /// </summary>
-    Task<bool> IsAvailableAsync(CancellationToken cancellationToken = default);
-
-    /// <summary>
-    /// Generates a response from the LLM
-    /// </summary>
+    /// <param name="request">The request containing prompt, model, and generation parameters.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>The response containing generated content and usage metrics.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the provider is not available or configured.</exception>
+    /// <exception cref="HttpRequestException">Thrown when the API request fails.</exception>
     Task<LlmResponse> GenerateAsync(LlmRequest request, CancellationToken cancellationToken = default);
-}
 
-/// <summary>
-/// Request to an LLM provider
-/// </summary>
-public class LlmRequest
-{
-    public string Model { get; set; } = string.Empty;
-    public string SystemPrompt { get; set; } = string.Empty;
-    public string UserPrompt { get; set; } = string.Empty;
-    public List<ConversationMessage> ConversationHistory { get; set; } = new();
-    public int? MaxTokens { get; set; }
-    public decimal? Temperature { get; set; }
-}
+    /// <summary>
+    /// Estimates the number of tokens in the provided text for the specified model.
+    /// </summary>
+    /// <param name="request">The request containing text and model for token estimation.</param>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>The response containing the estimated token count.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the provider is not available or configured.</exception>
+    Task<TokenEstimateResponse> EstimateTokensAsync(TokenEstimateRequest request, CancellationToken cancellationToken = default);
 
-/// <summary>
-/// Response from an LLM provider
-/// </summary>
-public class LlmResponse
-{
-    public string Content { get; set; } = string.Empty;
-    public int TokensUsed { get; set; }
-    public decimal Cost { get; set; }
-    public int LatencyMs { get; set; }
-    public string Model { get; set; } = string.Empty;
-}
-
-/// <summary>
-/// Represents a message in conversation history
-/// </summary>
-public class ConversationMessage
-{
-    public string Role { get; set; } = string.Empty; // "user" or "assistant"
-    public string Content { get; set; } = string.Empty;
+    /// <summary>
+    /// Checks if the LLM provider is available and properly configured.
+    /// </summary>
+    /// <returns>True if the provider is ready to process requests; otherwise, false.</returns>
+    bool IsAvailable();
 }
