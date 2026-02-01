@@ -1,9 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PromptLab.Core.Application.Services;
+using System.Reflection;
+using PromptLab.Core.Configuration;
+using PromptLab.Core.Services.Interfaces;
+using PromptLab.Core.Interfaces;
+using PromptLab.Infrastructure.Configuration;
 using PromptLab.Infrastructure.Data;
 using PromptLab.Infrastructure.Services;
-using System.Reflection;
+using PromptLab.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -35,6 +40,26 @@ builder.Services.AddSwaggerGen(options =>
 
 // Add ProblemDetails support
 builder.Services.AddProblemDetails();
+
+// Add Memory Cache for rate limiting
+builder.Services.AddMemoryCache();
+
+// Configure Rate Limiting Options
+builder.Services.Configure<RateLimitingOptions>(
+    builder.Configuration.GetSection(RateLimitingOptions.SectionName));
+
+// Register Rate Limit Service
+builder.Services.AddSingleton<IRateLimitService, InMemoryRateLimitService>();
+// Add LLM Provider Configuration
+builder.Services.Configure<LlmProvidersOptions>(
+    builder.Configuration.GetSection(LlmProvidersOptions.SectionName));
+builder.Services.AddSingleton<ILlmProviderConfig, LlmProviderConfigService>();
+
+// Validate configuration on startup
+builder.Services.AddOptions<LlmProvidersOptions>()
+    .Bind(builder.Configuration.GetSection(LlmProvidersOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -74,6 +99,10 @@ app.UseExceptionHandler();
 app.UseStatusCodePages();
 
 app.UseHttpsRedirection();
+
+// Add Rate Limiting Middleware (before CORS and Authorization)
+app.UseMiddleware<RateLimitMiddleware>();
+
 app.UseCors();
 app.UseAuthorization();
 app.MapControllers();
@@ -83,3 +112,6 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", timestamp =
     .WithTags("Health");
 
 app.Run();
+
+// Make the Program class accessible to integration tests
+public partial class Program { }
