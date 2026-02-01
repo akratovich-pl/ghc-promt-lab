@@ -1,5 +1,8 @@
 using Microsoft.EntityFrameworkCore;
+using PromptLab.Core.Domain.Interfaces;
+using PromptLab.Infrastructure.Configuration;
 using PromptLab.Infrastructure.Data;
+using PromptLab.Infrastructure.Services.LlmProviders;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -8,9 +11,20 @@ builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
 
+// Add HttpClient
+builder.Services.AddHttpClient();
+
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Configure LLM Provider settings
+var geminiConfig = new GoogleGeminiConfig();
+builder.Configuration.GetSection(GoogleGeminiConfig.ConfigSectionName).Bind(geminiConfig);
+builder.Services.AddSingleton(geminiConfig);
+
+// Register LLM providers
+builder.Services.AddSingleton<ILlmProvider, GoogleGeminiProvider>();
 
 // Add CORS
 builder.Services.AddCors(options =>
