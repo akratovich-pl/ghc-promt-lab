@@ -184,13 +184,17 @@ dotnet ef database update <MigrationName>
 
 ## Features (Planned)
 - ✅ Project structure setup
-- ✅ Database migrations and schema
+- ✅ Rate limiting service (in-memory, sliding window)
 - 🔄 AI prompt execution
 - 🔄 Token counting and metrics
 - 🔄 Response comparison
 - 🔄 Context file upload
 - 🔄 Conversation history
 - 🔄 Export functionality
+
+## Documentation
+
+- [Rate Limiting Configuration](docs/rate-limiting.md) - Configure and use the API rate limiting feature
 
 ## License
 MIT
