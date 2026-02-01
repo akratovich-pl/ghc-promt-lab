@@ -66,6 +66,9 @@ builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Register application services
+builder.Services.AddScoped<IPromptExecutionService, PromptExecutionService>();
+builder.Services.AddScoped<ILlmProvider, StubLlmProvider>(); // TODO: Replace with actual GoogleGemini provider
+builder.Services.AddScoped<IRateLimitService, StubRateLimitService>(); // TODO: Replace with actual rate limit service
 builder.Services.AddScoped<IPromptExecutionService, MockPromptExecutionService>();
 builder.Services.AddScoped<IProviderService, MockProviderService>();
 

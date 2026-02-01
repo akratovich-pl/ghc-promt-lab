@@ -1,3 +1,4 @@
+using PromptLab.Core.Domain.Enums;
 using PromptLab.Core.DTOs;
 
 namespace PromptLab.Core.Services.Interfaces;
