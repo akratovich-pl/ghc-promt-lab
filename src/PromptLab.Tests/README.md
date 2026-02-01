@@ -12,7 +12,10 @@ This document describes the integration test infrastructure for the PromptLab LL
 PromptLab.Tests/
 ├── Integration/
 │   ├── CustomWebApplicationFactory.cs    # Test server configuration
-│   └── LlmIntegrationTests.cs           # Main integration tests
+│   ├── LlmIntegrationTests.cs           # Database & core functionality tests
+│   ├── PromptApiEndpointTests.cs        # API endpoint tests (TODO)
+│   ├── ProviderApiEndpointTests.cs      # Provider endpoint tests (TODO)
+│   └── RateLimitingTests.cs             # Rate limiting tests (TODO)
 └── Helpers/
     ├── TestDataFactory.cs               # Test data creation
     └── MockHttpMessageHandlerFactory.cs # HTTP mocking utilities
@@ -67,13 +70,29 @@ dotnet test --verbosity normal
 
 ## Current Test Coverage
 
-### ✅ Implemented Tests
+### ✅ Implemented Tests (22 total: 21 passing, 1 skipped)
 
 #### Database Persistence Tests
 - ✅ `Given_NewConversation_When_Saved_Then_CanBeRetrieved`
 - ✅ `Given_PromptWithResponse_When_Saved_Then_RelationshipsMaintained`
 - ✅ `Given_PromptWithContextFile_When_Saved_Then_AssociationMaintained`
 - ✅ `Given_ConversationWithMultiplePrompts_When_Saved_Then_ConversationContextMaintained`
+
+#### Model Validation Tests
+- ✅ `Given_ValidModelName_When_Response_Created_Then_ModelNameStored` (3 variations)
+- ✅ `Given_MultipleProvidersResponses_When_Saved_Then_AllProvidersStored`
+
+#### Performance Metrics Tests
+- ✅ `Given_ResponseWithMetrics_When_Saved_Then_AllMetricsPreserved`
+- ✅ `Given_VaryingLatencies_When_Tracked_Then_StoredCorrectly` (3 variations)
+
+#### Context and Conversation Tests
+- ✅ `Given_PromptWithCustomContext_When_Saved_Then_ContextPreserved`
+- ✅ `Given_ConversationHistory_When_Retrieved_Then_OrderedByCreatedDate`
+
+#### Data Integrity Tests
+- ✅ `Given_CascadeDelete_When_ConversationDeleted_Then_PromptsAlsoDeleted`
+- ✅ `Given_ContextFileDeleted_When_PromptExists_Then_ForeignKeySetToNull`
 
 #### Edge Case Tests
 - ✅ `Given_EmptyPrompt_When_Validated_Then_ShouldFail`
@@ -89,7 +108,9 @@ dotnet test --verbosity normal
 
 ### 🔜 Tests to Implement (When Controllers/Services are Added)
 
-#### Prompt Execution Tests (POST /api/prompts/execute)
+These test placeholders have been created in separate test classes and are ready to be implemented once the corresponding controllers and services are added.
+
+#### Prompt Execution Tests (POST /api/prompts/execute) - `PromptApiEndpointTests.cs`
 - [ ] Execute simple prompt and verify response saved
 - [ ] Execute prompt with conversation context
 - [ ] Execute prompt with context files
@@ -107,7 +128,13 @@ dotnet test --verbosity normal
 - [ ] Handle malformed API responses
 - [ ] Handle database connection failure
 
-#### Provider Endpoints (GET /api/providers)
+#### Provider Endpoints - `ProviderApiEndpointTests.cs`
+- [ ] GET /api/providers - List all available providers
+- [ ] GET /api/providers/google-gemini/status - Get provider status
+- [ ] Handle invalid provider names
+- [ ] Handle missing API key configuration
+
+#### Prompt Retrieval - `PromptApiEndpointTests.cs`
 - [ ] List all available providers
 - [ ] Get Google Gemini provider status
 - [ ] Verify provider configuration
@@ -117,15 +144,17 @@ dotnet test --verbosity normal
 - [ ] Handle non-existent prompt ID
 - [ ] Get prompt with related entities
 
-#### Token Estimation (POST /api/prompts/estimate)
-- [ ] Estimate tokens for simple prompt
+#### Token Estimation - `PromptApiEndpointTests.cs`
+- [ ] POST /api/prompts/estimate - Estimate tokens for simple prompt
 - [ ] Estimate tokens for complex prompt with context
 
-#### Rate Limiting Tests
+#### Rate Limiting Tests - `RateLimitingTests.cs`
 - [ ] Verify rate limit headers in responses
 - [ ] Enforce rate limit (429 after threshold)
 - [ ] Verify rate limit reset after time window
 - [ ] Bypass rate limit for health checks
+- [ ] Test endpoint-specific rate limits
+- [ ] Verify Retry-After header value
 
 ## Known Issues
 

@@ -1,4 +1,5 @@
 using System.Net;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using PromptLab.Infrastructure.Data;
 using PromptLab.Tests.Helpers;
@@ -227,6 +228,249 @@ public class LlmIntegrationTests : IClassFixture<CustomWebApplicationFactory>
         // Assert - Should be able to find only this test's data
         var count = dbContext.Conversations.Count(c => c.UserId == testId);
         Assert.Equal(1, count);
+    }
+
+    #endregion
+
+    #region Model Validation Tests
+
+    [Theory]
+    [InlineData("gemini-pro")]
+    [InlineData("gemini-pro-vision")]
+    [InlineData("custom-model")]
+    public async Task Given_ValidModelName_When_Response_Created_Then_ModelNameStored(string modelName)
+    {
+        // Arrange
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        var conversation = TestDataFactory.CreateTestConversation();
+        var prompt = TestDataFactory.CreateTestPrompt(conversation.Id);
+        var response = TestDataFactory.CreateTestResponse(prompt.Id, model: modelName);
+
+        // Act
+        dbContext.Conversations.Add(conversation);
+        dbContext.Prompts.Add(prompt);
+        dbContext.Responses.Add(response);
+        await dbContext.SaveChangesAsync();
+
+        // Assert
+        var savedResponse = await dbContext.Responses.FindAsync(response.Id);
+        Assert.NotNull(savedResponse);
+        Assert.Equal(modelName, savedResponse.Model);
+    }
+
+    [Fact]
+    public async Task Given_MultipleProvidersResponses_When_Saved_Then_AllProvidersStored()
+    {
+        // Arrange
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        var conversation = TestDataFactory.CreateTestConversation();
+        var prompt = TestDataFactory.CreateTestPrompt(conversation.Id);
+        var googleResponse = TestDataFactory.CreateTestResponse(
+            prompt.Id, 
+            provider: Core.Domain.Enums.AiProvider.Google);
+        var openAiResponse = TestDataFactory.CreateTestResponse(
+            prompt.Id, 
+            provider: Core.Domain.Enums.AiProvider.OpenAI);
+
+        // Act
+        dbContext.Conversations.Add(conversation);
+        dbContext.Prompts.Add(prompt);
+        dbContext.Responses.AddRange(googleResponse, openAiResponse);
+        await dbContext.SaveChangesAsync();
+
+        // Assert
+        var responses = dbContext.Responses
+            .Where(r => r.PromptId == prompt.Id)
+            .ToList();
+        
+        Assert.Equal(2, responses.Count);
+        Assert.Contains(responses, r => r.Provider == Core.Domain.Enums.AiProvider.Google);
+        Assert.Contains(responses, r => r.Provider == Core.Domain.Enums.AiProvider.OpenAI);
+    }
+
+    #endregion
+
+    #region Performance Metrics Tests
+
+    [Fact]
+    public async Task Given_ResponseWithMetrics_When_Saved_Then_AllMetricsPreserved()
+    {
+        // Arrange
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        var conversation = TestDataFactory.CreateTestConversation();
+        var prompt = TestDataFactory.CreateTestPrompt(conversation.Id);
+        var response = TestDataFactory.CreateTestResponse(
+            prompt.Id,
+            tokens: 150,
+            cost: 0.000456m,
+            latencyMs: 1250);
+
+        // Act
+        dbContext.Conversations.Add(conversation);
+        dbContext.Prompts.Add(prompt);
+        dbContext.Responses.Add(response);
+        await dbContext.SaveChangesAsync();
+
+        // Assert
+        var savedResponse = await dbContext.Responses.FindAsync(response.Id);
+        Assert.NotNull(savedResponse);
+        Assert.Equal(150, savedResponse.Tokens);
+        Assert.Equal(0.000456m, savedResponse.Cost);
+        Assert.Equal(1250, savedResponse.LatencyMs);
+    }
+
+    [Theory]
+    [InlineData(100)]
+    [InlineData(1000)]
+    [InlineData(50000)]
+    public async Task Given_VaryingLatencies_When_Tracked_Then_StoredCorrectly(int latencyMs)
+    {
+        // Arrange
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        var conversation = TestDataFactory.CreateTestConversation();
+        var prompt = TestDataFactory.CreateTestPrompt(conversation.Id);
+        var response = TestDataFactory.CreateTestResponse(
+            prompt.Id, 
+            latencyMs: latencyMs);
+
+        // Act
+        dbContext.Conversations.Add(conversation);
+        dbContext.Prompts.Add(prompt);
+        dbContext.Responses.Add(response);
+        await dbContext.SaveChangesAsync();
+
+        // Assert
+        var savedResponse = await dbContext.Responses.FindAsync(response.Id);
+        Assert.NotNull(savedResponse);
+        Assert.Equal(latencyMs, savedResponse.LatencyMs);
+        Assert.True(savedResponse.LatencyMs >= 0);
+    }
+
+    #endregion
+
+    #region Context and Conversation Tests
+
+    [Fact]
+    public async Task Given_PromptWithCustomContext_When_Saved_Then_ContextPreserved()
+    {
+        // Arrange
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        var conversation = TestDataFactory.CreateTestConversation();
+        var customContext = "Previous conversation about weather and climate patterns.";
+        var prompt = TestDataFactory.CreateTestPrompt(
+            conversation.Id, 
+            context: customContext);
+
+        // Act
+        dbContext.Conversations.Add(conversation);
+        dbContext.Prompts.Add(prompt);
+        await dbContext.SaveChangesAsync();
+
+        // Assert
+        var savedPrompt = await dbContext.Prompts.FindAsync(prompt.Id);
+        Assert.NotNull(savedPrompt);
+        Assert.Equal(customContext, savedPrompt.Context);
+    }
+
+    [Fact]
+    public async Task Given_ConversationHistory_When_Retrieved_Then_OrderedByCreatedDate()
+    {
+        // Arrange
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        var conversation = TestDataFactory.CreateTestConversation();
+        
+        // Create prompts with slight time differences
+        var prompt1 = TestDataFactory.CreateTestPrompt(conversation.Id, "First question");
+        prompt1.CreatedAt = DateTime.UtcNow.AddMinutes(-10);
+        
+        var prompt2 = TestDataFactory.CreateTestPrompt(conversation.Id, "Second question");
+        prompt2.CreatedAt = DateTime.UtcNow.AddMinutes(-5);
+        
+        var prompt3 = TestDataFactory.CreateTestPrompt(conversation.Id, "Third question");
+        prompt3.CreatedAt = DateTime.UtcNow;
+
+        // Act
+        dbContext.Conversations.Add(conversation);
+        dbContext.Prompts.AddRange(prompt3, prompt1, prompt2); // Add in random order
+        await dbContext.SaveChangesAsync();
+
+        // Assert
+        var orderedPrompts = dbContext.Prompts
+            .Where(p => p.ConversationId == conversation.Id)
+            .OrderBy(p => p.CreatedAt)
+            .ToList();
+        
+        Assert.Equal(3, orderedPrompts.Count);
+        Assert.Equal("First question", orderedPrompts[0].UserPrompt);
+        Assert.Equal("Second question", orderedPrompts[1].UserPrompt);
+        Assert.Equal("Third question", orderedPrompts[2].UserPrompt);
+    }
+
+    #endregion
+
+    #region Data Integrity Tests
+
+    [Fact]
+    public async Task Given_CascadeDelete_When_ConversationDeleted_Then_PromptsAlsoDeleted()
+    {
+        // Arrange
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        var conversation = TestDataFactory.CreateTestConversation();
+        var prompt = TestDataFactory.CreateTestPrompt(conversation.Id);
+        
+        dbContext.Conversations.Add(conversation);
+        dbContext.Prompts.Add(prompt);
+        await dbContext.SaveChangesAsync();
+
+        // Act - Delete conversation
+        dbContext.Conversations.Remove(conversation);
+        await dbContext.SaveChangesAsync();
+
+        // Assert - Prompt should be deleted due to cascade
+        var deletedPrompt = await dbContext.Prompts.FindAsync(prompt.Id);
+        Assert.Null(deletedPrompt);
+    }
+
+    [Fact]
+    public async Task Given_ContextFileDeleted_When_PromptExists_Then_ForeignKeySetToNull()
+    {
+        // Arrange
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        var conversation = TestDataFactory.CreateTestConversation();
+        var contextFile = TestDataFactory.CreateTestContextFile();
+        var prompt = TestDataFactory.CreateTestPrompt(
+            conversation.Id, 
+            contextFileId: contextFile.Id);
+        
+        dbContext.Conversations.Add(conversation);
+        dbContext.ContextFiles.Add(contextFile);
+        dbContext.Prompts.Add(prompt);
+        await dbContext.SaveChangesAsync();
+
+        // Act - Delete context file
+        dbContext.ContextFiles.Remove(contextFile);
+        await dbContext.SaveChangesAsync();
+
+        // Assert - Prompt should still exist with null ContextFileId
+        var savedPrompt = await dbContext.Prompts.FindAsync(prompt.Id);
+        Assert.NotNull(savedPrompt);
+        Assert.Null(savedPrompt.ContextFileId);
     }
 
     #endregion
