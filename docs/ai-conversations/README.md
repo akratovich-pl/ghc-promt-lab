@@ -16,6 +16,7 @@ Copilot training course.
 | Date | Session Topic | Tags | Key Outcomes |
 |------|---------------|------|-------------|
 | 2026-01-30 | [Initial Planning and Repository Setup](2026-01-30-initial-planning.md) | planning, repository-setup, naming | Repository created, project scope defined |
+| 2026-02-01 | [LLM Backend Implementation and Frontend Migration](2026-02-01-llm-backend-and-frontend-migration.md) | implementation, backend, frontend, llm-integration, vue, copilot-coding-agent | Backend LLM complete (6 tasks), Vue 3 established, 8 PRs merged |
 
 ## Guidelines
 
