@@ -50,15 +50,16 @@ public class TokenEstimateTests
     }
 
     [Fact]
-    public void TokenEstimateRequest_WithEmptyText_ShouldBeAllowed()
+    public void TokenEstimateRequest_WithNonEmptyText_ShouldBeValid()
     {
         // Arrange & Act
         var request = new TokenEstimateRequest(
-            Text: "",
+            Text: "Sample text",
             Model: "gemini-pro"
         );
 
         // Assert
-        Assert.Equal("", request.Text);
+        Assert.Equal("Sample text", request.Text);
+        Assert.NotEmpty(request.Text);
     }
 }
