@@ -389,7 +389,7 @@ public class PromptExecutionService : IPromptExecutionService
                     Id = Guid.NewGuid(),
                     UserId = request.UserId,
                     Title = request.UserPrompt.Length > 50 
-                        ? request.UserPrompt.Substring(0, 47) + "..." 
+                        ? request.UserPrompt[..47] + "..." 
                         : request.UserPrompt,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
