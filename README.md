@@ -114,15 +114,40 @@ npm run preview
 
 ## Development
 
-### Database Migrations (when ready)
+### Database Migrations
+
+The database has been initialized with the following entities:
+- Conversations
+- Prompts
+- Responses
+- ContextFiles
+
+**Initial Setup (already done):**
 ```bash
 cd src/PromptLab.Api
-dotnet ef migrations add InitialCreate --project ../PromptLab.Infrastructure
 dotnet ef database update
+```
+
+**Creating New Migrations:**
+```bash
+cd src/PromptLab.Api
+dotnet ef migrations add <MigrationName> --project ../PromptLab.Infrastructure --output-dir Data/Migrations
+dotnet ef database update
+```
+
+**Reverting Migrations:**
+```bash
+cd src/PromptLab.Api
+# Remove last migration
+dotnet ef migrations remove --project ../PromptLab.Infrastructure
+
+# Revert to specific migration
+dotnet ef database update <MigrationName>
 ```
 
 ## Features (Planned)
 - ✅ Project structure setup
+- ✅ Database migrations and schema
 - 🔄 AI prompt execution
 - 🔄 Token counting and metrics
 - 🔄 Response comparison
