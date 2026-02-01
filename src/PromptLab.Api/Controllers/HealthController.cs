@@ -2,6 +2,7 @@ using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using PromptLab.Infrastructure.Data;
 using PromptLab.Core.Logging;
+using PromptLab.Api.Services;
 
 namespace PromptLab.Api.Controllers;
 
@@ -14,13 +15,16 @@ public class HealthController : ControllerBase
 {
     private readonly ApplicationDbContext _dbContext;
     private readonly ILogger<HealthController> _logger;
-    private static DateTime _startupTime = DateTime.UtcNow;
-    private static DateTime? _lastSuccessfulHealthCheck;
+    private readonly IStartupTimeService _startupTimeService;
 
-    public HealthController(ApplicationDbContext dbContext, ILogger<HealthController> logger)
+    public HealthController(
+        ApplicationDbContext dbContext, 
+        ILogger<HealthController> logger,
+        IStartupTimeService startupTimeService)
     {
         _dbContext = dbContext;
         _logger = logger;
+        _startupTimeService = startupTimeService;
     }
 
     /// <summary>
@@ -36,7 +40,7 @@ public class HealthController : ControllerBase
         {
             Status = "healthy",
             Timestamp = DateTime.UtcNow,
-            Uptime = DateTime.UtcNow - _startupTime,
+            Uptime = DateTime.UtcNow - _startupTimeService.StartupTime,
             Components = new
             {
                 Application = await CheckApplicationHealth(),
@@ -44,10 +48,10 @@ public class HealthController : ControllerBase
                 LlmProvider = CheckLlmProviderHealth(),
                 Cache = CheckCacheHealth()
             },
-            LastSuccessfulCheck = _lastSuccessfulHealthCheck
+            LastSuccessfulCheck = _startupTimeService.LastSuccessfulHealthCheck
         };
 
-        _lastSuccessfulHealthCheck = DateTime.UtcNow;
+        _startupTimeService.LastSuccessfulHealthCheck = DateTime.UtcNow;
         _logger.LogInformation(LogEvents.HealthCheckCompleted, "Health check completed successfully");
 
         return Ok(healthStatus);
@@ -89,8 +93,8 @@ public class HealthController : ControllerBase
                 Status = "up",
                 Details = new Dictionary<string, object>
                 {
-                    { "startupTime", _startupTime },
-                    { "uptime", DateTime.UtcNow - _startupTime },
+                    { "startupTime", _startupTimeService.StartupTime },
+                    { "uptime", DateTime.UtcNow - _startupTimeService.StartupTime },
                     { "environment", Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "Production" }
                 }
             };

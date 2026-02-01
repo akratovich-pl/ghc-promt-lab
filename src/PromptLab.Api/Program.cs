@@ -1,7 +1,7 @@
 using Microsoft.EntityFrameworkCore;
 using PromptLab.Infrastructure.Data;
 using Serilog;
-using PromptLab.Core.Logging;
+using PromptLab.Api.Services;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -15,7 +15,7 @@ Log.Logger = new LoggerConfiguration()
 
 try
 {
-    Log.Information("Starting PromptLab API, EventId: {EventId}", LogEvents.ConfigurationLoaded);
+    Log.Information("Starting PromptLab API");
 
     var builder = WebApplication.CreateBuilder(args);
 
@@ -23,6 +23,7 @@ try
     builder.Host.UseSerilog();
 
     // Add services to the container
+    builder.Services.AddSingleton<IStartupTimeService, StartupTimeService>();
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
     builder.Services.AddSwaggerGen();
