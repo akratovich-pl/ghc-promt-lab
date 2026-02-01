@@ -1,5 +1,9 @@
 using Microsoft.EntityFrameworkCore;
+using PromptLab.Core.Configuration;
+using PromptLab.Core.Services.Interfaces;
 using PromptLab.Infrastructure.Data;
+using PromptLab.Infrastructure.Services;
+using PromptLab.Api.Middleware;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -7,6 +11,16 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen();
+
+// Add Memory Cache for rate limiting
+builder.Services.AddMemoryCache();
+
+// Configure Rate Limiting Options
+builder.Services.Configure<RateLimitingOptions>(
+    builder.Configuration.GetSection(RateLimitingOptions.SectionName));
+
+// Register Rate Limit Service
+builder.Services.AddSingleton<IRateLimitService, InMemoryRateLimitService>();
 
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
@@ -34,6 +48,10 @@ if (app.Environment.IsDevelopment())
 }
 
 app.UseHttpsRedirection();
+
+// Add Rate Limiting Middleware (before CORS and Authorization)
+app.UseMiddleware<RateLimitMiddleware>();
+
 app.UseCors();
 app.UseAuthorization();
 app.MapControllers();
@@ -42,3 +60,6 @@ app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", timestamp =
     .WithName("HealthCheck");
 
 app.Run();
+
+// Make the Program class accessible to integration tests
+public partial class Program { }
