@@ -50,17 +50,31 @@ AI interaction visualization tool - Full-stack application for training and lear
 cd src/PromptLab.Api
 ```
 
-2. Restore dependencies:
+2. Set up environment variables for LLM providers:
+```bash
+# For Google Gemini API (required for AI features)
+export GOOGLE_GEMINI_API_KEY="your-api-key-here"
+
+# On Windows (PowerShell)
+$env:GOOGLE_GEMINI_API_KEY="your-api-key-here"
+
+# On Windows (Command Prompt)
+set GOOGLE_GEMINI_API_KEY=your-api-key-here
+```
+
+**Note**: Never commit API keys to the repository. They must be stored as environment variables.
+
+3. Restore dependencies:
 ```bash
 dotnet restore
 ```
 
-3. Build the project:
+4. Build the project:
 ```bash
 dotnet build
 ```
 
-4. Run the API:
+5. Run the API:
 ```bash
 dotnet run
 ```
@@ -114,11 +128,58 @@ npm run preview
 
 ## Development
 
+### LLM Provider Configuration
+
+The application uses environment variables for API keys and appsettings.json for provider configuration.
+
+#### Environment Variables
+- `GOOGLE_GEMINI_API_KEY` - API key for Google Gemini (required)
+
+#### Configuration File (appsettings.json)
+The LLM provider settings are configured in `src/PromptLab.Api/appsettings.json`:
+
+```json
+"LlmProviders": {
+  "GoogleGemini": {
+    "Enabled": true,
+    "BaseUrl": "https://generativelanguage.googleapis.com/v1beta",
+    "DefaultModel": "gemini-pro",
+    "MaxTokens": 8192,
+    "Temperature": 0.7
+  }
+}
+```
+
 ### Database Migrations (when ready)
+### Database Migrations
+
+The database has been initialized with the following entities:
+- Conversations
+- Prompts
+- Responses
+- ContextFiles
+
+**Initial Setup (already done):**
 ```bash
 cd src/PromptLab.Api
-dotnet ef migrations add InitialCreate --project ../PromptLab.Infrastructure
 dotnet ef database update
+```
+
+**Creating New Migrations:**
+```bash
+cd src/PromptLab.Api
+dotnet ef migrations add <MigrationName> --project ../PromptLab.Infrastructure --output-dir Data/Migrations
+dotnet ef database update
+```
+
+**Reverting Migrations:**
+```bash
+cd src/PromptLab.Api
+# Remove last migration
+dotnet ef migrations remove --project ../PromptLab.Infrastructure
+
+# Revert to specific migration
+dotnet ef database update <MigrationName>
 ```
 
 ## Features (Planned)

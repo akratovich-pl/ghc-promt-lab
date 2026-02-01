@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using PromptLab.Core.Configuration;
 using PromptLab.Core.Services.Interfaces;
+using PromptLab.Core.Interfaces;
+using PromptLab.Infrastructure.Configuration;
 using PromptLab.Infrastructure.Data;
 using PromptLab.Infrastructure.Services;
 using PromptLab.Api.Middleware;
@@ -21,6 +23,16 @@ builder.Services.Configure<RateLimitingOptions>(
 
 // Register Rate Limit Service
 builder.Services.AddSingleton<IRateLimitService, InMemoryRateLimitService>();
+// Add LLM Provider Configuration
+builder.Services.Configure<LlmProvidersOptions>(
+    builder.Configuration.GetSection(LlmProvidersOptions.SectionName));
+builder.Services.AddSingleton<ILlmProviderConfig, LlmProviderConfigService>();
+
+// Validate configuration on startup
+builder.Services.AddOptions<LlmProvidersOptions>()
+    .Bind(builder.Configuration.GetSection(LlmProvidersOptions.SectionName))
+    .ValidateDataAnnotations()
+    .ValidateOnStart();
 
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
