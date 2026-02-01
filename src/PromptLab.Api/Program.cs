@@ -1,12 +1,14 @@
 using Microsoft.EntityFrameworkCore;
+using PromptLab.Core.Domain.Interfaces;
+using PromptLab.Infrastructure.Configuration;
+using PromptLab.Infrastructure.Data;
+using PromptLab.Infrastructure.Services.LlmProviders;
 using Microsoft.OpenApi.Models;
 using PromptLab.Core.Application.Services;
 using System.Reflection;
 using PromptLab.Core.Configuration;
 using PromptLab.Core.Services.Interfaces;
 using PromptLab.Core.Interfaces;
-using PromptLab.Infrastructure.Configuration;
-using PromptLab.Infrastructure.Data;
 using PromptLab.Infrastructure.Services;
 using PromptLab.Api.Middleware;
 
@@ -61,10 +63,20 @@ builder.Services.AddOptions<LlmProvidersOptions>()
     .ValidateDataAnnotations()
     .ValidateOnStart();
 
+// Add HttpClient
+builder.Services.AddHttpClient();
+
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+// Configure LLM Provider settings
+var geminiConfig = new GoogleGeminiConfig();
+builder.Configuration.GetSection(GoogleGeminiConfig.ConfigSectionName).Bind(geminiConfig);
+builder.Services.AddSingleton(geminiConfig);
+
+// Register LLM providers
+builder.Services.AddSingleton<ILlmProvider, GoogleGeminiProvider>();
 // Register application services
 builder.Services.AddScoped<IPromptExecutionService, PromptExecutionService>();
 builder.Services.AddScoped<ILlmProvider, StubLlmProvider>(); // TODO: Replace with actual GoogleGemini provider

@@ -184,6 +184,7 @@ dotnet ef database update <MigrationName>
 
 ## Features (Planned)
 - ✅ Project structure setup
+- ✅ Google Gemini API integration
 - ✅ Rate limiting service (in-memory, sliding window)
 - 🔄 AI prompt execution
 - 🔄 Token counting and metrics
@@ -192,6 +193,64 @@ dotnet ef database update <MigrationName>
 - 🔄 Conversation history
 - 🔄 Export functionality
 
+## Configuration
+
+### Google Gemini API Setup
+
+To use the Google Gemini API provider, you need to configure your API key in `appsettings.json`:
+
+```json
+{
+  "LlmProviders": {
+    "GoogleGemini": {
+      "ApiKey": "YOUR_GOOGLE_API_KEY_HERE",
+      "BaseUrl": "https://generativelanguage.googleapis.com",
+      "Model": "gemini-pro",
+      "ApiVersion": "v1",
+      "MaxRetries": 3,
+      "TimeoutSeconds": 30,
+      "InputTokenCostPer1K": 0.00025,
+      "OutputTokenCostPer1K": 0.0005
+    }
+  }
+}
+```
+
+Get your API key from [Google AI Studio](https://makersuite.google.com/app/apikey).
+
+### Manual Integration Testing
+
+To manually test the Google Gemini provider:
+
+1. Set your API key in `appsettings.json` or `appsettings.Development.json`
+2. Use the `ILlmProvider` service in your code:
+
+```csharp
+// Inject ILlmProvider in your controller/service
+public class ExampleController : ControllerBase
+{
+    private readonly ILlmProvider _llmProvider;
+
+    public ExampleController(ILlmProvider llmProvider)
+    {
+        _llmProvider = llmProvider;
+    }
+
+    public async Task<IActionResult> Generate()
+    {
+        var request = new LlmRequest
+        {
+            Prompt = "Hello, what can you do?",
+            Temperature = 0.7
+        };
+
+        var response = await _llmProvider.GenerateAsync(request);
+        return Ok(response);
+    }
+}
+```
+
+3. Run the API and make a request to your endpoint
 ## Documentation
 
 - [Rate Limiting Configuration](docs/rate-limiting.md) - Configure and use the API rate limiting feature
