@@ -20,6 +20,8 @@ public class PromptExecutionService : IPromptExecutionService
 
     private const int MaxPromptLength = 100000; // 100k characters
     private const int MaxContextFilesCount = 10;
+    private const int MaxConversationTitleLength = 50;
+    private const int TruncatedTitleLength = 47;
 
     public PromptExecutionService(
         ILlmProvider llmProvider,
@@ -113,7 +115,7 @@ public class PromptExecutionService : IPromptExecutionService
             var result = await SaveToDatabase(
                 request,
                 llmResponse,
-                stopwatch.Elapsed.Milliseconds,
+                (int)stopwatch.ElapsedMilliseconds,
                 loadedContextFileIds.FirstOrDefault(),
                 correlationId,
                 cancellationToken);
@@ -388,8 +390,8 @@ public class PromptExecutionService : IPromptExecutionService
                 {
                     Id = Guid.NewGuid(),
                     UserId = request.UserId,
-                    Title = request.UserPrompt.Length > 50 
-                        ? request.UserPrompt[..47] + "..." 
+                    Title = request.UserPrompt.Length > MaxConversationTitleLength 
+                        ? request.UserPrompt[..TruncatedTitleLength] + "..." 
                         : request.UserPrompt,
                     CreatedAt = DateTime.UtcNow,
                     UpdatedAt = DateTime.UtcNow
@@ -403,6 +405,9 @@ public class PromptExecutionService : IPromptExecutionService
             }
 
             // Save Prompt entity
+            // Note: Current schema only supports a single ContextFileId. 
+            // If multiple context files are loaded, only the first is persisted.
+            // Consider updating Prompt entity to support multiple context files in the future.
             var prompt = new Prompt
             {
                 Id = Guid.NewGuid(),
