@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PromptLab.Api.Models;
 using PromptLab.Infrastructure.Data;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -38,7 +39,15 @@ app.UseCors();
 app.UseAuthorization();
 app.MapControllers();
 
-app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
+app.MapGet("/api/health", () => 
+    TypedResults.Ok(new HealthCheckResponse 
+    { 
+        Status = "healthy", 
+        Timestamp = DateTime.UtcNow 
+    }))
     .WithName("HealthCheck");
 
 app.Run();
+
+// Make Program class accessible for integration tests
+public partial class Program { }
