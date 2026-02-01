@@ -1,6 +1,8 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using PromptLab.Core.Application.Services;
 using PromptLab.Infrastructure.Data;
+using PromptLab.Infrastructure.Services;
 using System.Reflection;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -37,6 +39,10 @@ builder.Services.AddProblemDetails();
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register application services
+builder.Services.AddScoped<IPromptExecutionService, MockPromptExecutionService>();
+builder.Services.AddScoped<IProviderService, MockProviderService>();
 
 // Add CORS
 builder.Services.AddCors(options =>
