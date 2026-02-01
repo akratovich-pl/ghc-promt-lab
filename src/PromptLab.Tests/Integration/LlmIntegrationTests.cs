@@ -162,23 +162,52 @@ public class LlmIntegrationTests : IClassFixture<CustomWebApplicationFactory>
     #region Edge Case Tests
 
     [Fact]
-    public async Task Given_EmptyPrompt_When_Validated_Then_ShouldFail()
+    public async Task Given_EmptyPrompt_When_Validated_Then_ShouldBeDetectable()
     {
         // Arrange
-        var emptyPrompt = "";
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        var conversation = TestDataFactory.CreateTestConversation();
+        var prompt = TestDataFactory.CreateTestPrompt(conversation.Id);
+        prompt.UserPrompt = ""; // Set to empty string
 
-        // Assert - Empty prompts should be rejected at validation level
-        Assert.True(string.IsNullOrWhiteSpace(emptyPrompt));
+        // Note: InMemory database doesn't enforce IsRequired constraints
+        // In production with a real database, this would fail validation
+        // This test verifies empty prompts can be detected for validation
+        dbContext.Conversations.Add(conversation);
+        dbContext.Prompts.Add(prompt);
+        await dbContext.SaveChangesAsync();
+
+        // Assert - Empty prompts should be detectable
+        var savedPrompt = await dbContext.Prompts.FindAsync(prompt.Id);
+        Assert.NotNull(savedPrompt);
+        Assert.True(string.IsNullOrWhiteSpace(savedPrompt.UserPrompt));
     }
 
     [Fact]
-    public async Task Given_ExtremelyLongPrompt_When_Created_Then_HandledCorrectly()
+    public async Task Given_ExtremelyLongPrompt_When_Saved_Then_StoredSuccessfully()
     {
         // Arrange
-        var longPrompt = TestDataFactory.SamplePrompts.ExtremelyLong;
+        using var scope = _factory.Services.CreateScope();
+        var dbContext = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        
+        var conversation = TestDataFactory.CreateTestConversation();
+        var extremelyLongPrompt = TestDataFactory.SamplePrompts.ExtremelyLong;
+        var prompt = TestDataFactory.CreateTestPrompt(
+            conversation.Id, 
+            userPrompt: extremelyLongPrompt);
 
-        // Assert - Extremely long prompts should be identifiable
-        Assert.True(longPrompt.Length > 10000);
+        // Act
+        dbContext.Conversations.Add(conversation);
+        dbContext.Prompts.Add(prompt);
+        await dbContext.SaveChangesAsync();
+
+        // Assert - Database should handle extremely long prompts
+        var savedPrompt = await dbContext.Prompts.FindAsync(prompt.Id);
+        Assert.NotNull(savedPrompt);
+        Assert.True(savedPrompt.UserPrompt.Length > 10000);
+        Assert.Equal(extremelyLongPrompt, savedPrompt.UserPrompt);
     }
 
     [Fact]
