@@ -1,0 +1,12 @@
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\bin\Debug\net10.0\PromptLab.Core.deps.json
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\bin\Debug\net10.0\PromptLab.Core.dll
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\bin\Debug\net10.0\PromptLab.Core.pdb
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\obj\Debug\net10.0\PromptLab.Core.GeneratedMSBuildEditorConfig.editorconfig
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\obj\Debug\net10.0\PromptLab.Core.AssemblyInfoInputs.cache
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\obj\Debug\net10.0\PromptLab.Core.AssemblyInfo.cs
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\obj\Debug\net10.0\PromptLab.Core.csproj.CoreCompileInputs.cache
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\obj\Debug\net10.0\PromptLab.Core.sourcelink.json
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\obj\Debug\net10.0\PromptLab.Core.dll
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\obj\Debug\net10.0\refint\PromptLab.Core.dll
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\obj\Debug\net10.0\PromptLab.Core.pdb
+C:\Users\a.kratovich\source\repos\godel\ghc-promt-lab\src\PromptLab.Core\obj\Debug\net10.0\ref\PromptLab.Core.dll
