@@ -1,0 +1,8 @@
+<Solution>
+  <Folder Name="/src/">
+    <Project Path="src/PromptLab.Api/PromptLab.Api.csproj" />
+    <Project Path="src/PromptLab.Core/PromptLab.Core.csproj" />
+    <Project Path="src/PromptLab.Infrastructure/PromptLab.Infrastructure.csproj" />
+    <Project Path="src/PromptLab.Tests/PromptLab.Tests.csproj" />
+  </Folder>
+</Solution>
