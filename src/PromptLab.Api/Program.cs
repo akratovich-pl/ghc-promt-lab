@@ -1,5 +1,7 @@
 using Microsoft.EntityFrameworkCore;
+using PromptLab.Core.Services.Interfaces;
 using PromptLab.Infrastructure.Data;
+using PromptLab.Infrastructure.Services;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -11,6 +13,11 @@ builder.Services.AddSwaggerGen();
 // Add DbContext
 builder.Services.AddDbContext<ApplicationDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
+
+// Register application services
+builder.Services.AddScoped<IPromptExecutionService, PromptExecutionService>();
+builder.Services.AddScoped<ILlmProvider, StubLlmProvider>(); // TODO: Replace with actual GoogleGemini provider
+builder.Services.AddScoped<IRateLimitService, StubRateLimitService>(); // TODO: Replace with actual rate limit service
 
 // Add CORS
 builder.Services.AddCors(options =>
