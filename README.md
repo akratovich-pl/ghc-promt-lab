@@ -254,6 +254,7 @@ public class ExampleController : ControllerBase
 ## Documentation
 
 - [Rate Limiting Configuration](docs/rate-limiting.md) - Configure and use the API rate limiting feature
+- [Frontend API Integration](docs/frontend-api-integration.md) - Frontend-backend integration guide with API endpoints, state management, and components
 
 ## License
 MIT
