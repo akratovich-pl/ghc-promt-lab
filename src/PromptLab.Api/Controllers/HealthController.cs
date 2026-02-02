@@ -60,7 +60,7 @@ public class HealthController : ControllerBase
     /// <summary>
     /// Simple liveness probe endpoint
     /// </summary>
-    [HttpGet("alive")]
+    [HttpGet("liveness")]
     public IActionResult Alive()
     {
         return Ok(new { status = "alive", timestamp = DateTime.UtcNow });
@@ -69,7 +69,7 @@ public class HealthController : ControllerBase
     /// <summary>
     /// Readiness probe endpoint
     /// </summary>
-    [HttpGet("ready")]
+    [HttpGet("readiness")]
     public async Task<IActionResult> Ready()
     {
         var dbHealthy = await CheckDatabaseHealth();

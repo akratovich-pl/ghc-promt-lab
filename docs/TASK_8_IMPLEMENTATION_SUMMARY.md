@@ -48,7 +48,7 @@ Returns detailed status for all components:
 }
 ```
 
-#### `/api/health/alive` - Liveness Probe
+#### `/api/health/liveness` - Liveness Probe
 Simple probe for container orchestration:
 ```json
 {
@@ -57,7 +57,7 @@ Simple probe for container orchestration:
 }
 ```
 
-#### `/api/health/ready` - Readiness Probe
+#### `/api/health/readiness` - Readiness Probe
 Checks critical dependencies (database):
 ```json
 {
