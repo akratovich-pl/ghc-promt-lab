@@ -144,7 +144,7 @@
                   {{ new Date(execution.timestamp).toLocaleTimeString() }}
                 </div>
                 <div class="text-sm text-gray-900 dark:text-white truncate">
-                  {{ execution.prompt.substring(0, 60) }}{{ execution.prompt.length > 60 ? '...' : '' }}
+                  {{ truncatePrompt(execution.prompt) }}
                 </div>
               </div>
             </div>
@@ -159,13 +159,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { gsap } from 'gsap'
 import { useLlmStore } from '@/stores/llmStore'
 import { usePromptStore } from '@/stores/promptStore'
 import { useMetricsStore } from '@/stores/metricsStore'
 import type { PromptExecution } from '@/stores/promptStore'
+
+// Constants
+const CHARS_PER_TOKEN = 4 // Rough approximation for token calculation
+const HISTORY_TRUNCATE_LENGTH = 60
 
 const router = useRouter()
 const llmStore = useLlmStore()
@@ -175,6 +179,13 @@ const metricsStore = useMetricsStore()
 const promptCard = ref<HTMLElement>()
 const responseCard = ref<HTMLElement>()
 const metricsCard = ref<HTMLElement>()
+
+// Helper function to truncate prompt for display
+const truncatePrompt = (prompt: string) => {
+  return prompt.length > HISTORY_TRUNCATE_LENGTH
+    ? prompt.substring(0, HISTORY_TRUNCATE_LENGTH) + '...'
+    : prompt
+}
 
 onMounted(() => {
   // Animate cards on mount with GSAP
@@ -207,8 +218,8 @@ async function executePrompt() {
     const executionTime = Date.now() - startTime
     
     // Mock token counts (in real implementation, these would come from API)
-    const inputTokens = Math.ceil(promptStore.currentPrompt.length / 4)
-    const outputTokens = Math.ceil(mockResponse.length / 4)
+    const inputTokens = Math.ceil(promptStore.currentPrompt.length / CHARS_PER_TOKEN)
+    const outputTokens = Math.ceil(mockResponse.length / CHARS_PER_TOKEN)
     const totalTokens = inputTokens + outputTokens
     
     // Calculate cost

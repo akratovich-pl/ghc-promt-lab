@@ -2,6 +2,10 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api'
 
+// Mock cost values for testing without backend API
+const MOCK_INPUT_COST_PER_1K = 0.00025
+const MOCK_OUTPUT_COST_PER_1K = 0.0005
+
 export interface Provider {
   name: string
   isAvailable: boolean
@@ -93,8 +97,8 @@ export const useLlmStore = defineStore('llm', () => {
           displayName: modelName,
           provider: providerName,
           maxTokens: 8192,
-          inputCostPer1kTokens: 0.00025,
-          outputCostPer1kTokens: 0.0005
+          inputCostPer1kTokens: MOCK_INPUT_COST_PER_1K,
+          outputCostPer1kTokens: MOCK_OUTPUT_COST_PER_1K
         }
       }
     } finally {
