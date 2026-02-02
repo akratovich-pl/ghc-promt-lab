@@ -1,322 +1,279 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 p-6">
-    <div class="max-w-7xl mx-auto">
-      <!-- Header -->
-      <div class="mb-8">
-        <h1 class="text-4xl font-bold text-gray-900 dark:text-white mb-2">
-          🧪 Prompt Lab
-        </h1>
-        <p class="text-gray-600 dark:text-gray-400">
-          Test and visualize AI prompt execution with real-time metrics
-        </p>
-      </div>
-
-      <!-- Main Layout -->
-      <div class="relative">
-        <!-- Grid Layout for Blocks -->
-        <div class="grid grid-cols-1 lg:grid-cols-3 gap-8 lg:gap-12 mb-8">
-          <!-- Input Block -->
-          <div ref="inputBlockRef">
-            <InputBlock
-              v-model="promptInput"
-              :is-active="processingState === 'idle'"
-              :disabled="processingState === 'processing'"
-              @input="handleInputChange"
-            />
+  <div class="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-gray-800">
+    <!-- Header -->
+    <header class="bg-white dark:bg-gray-800 shadow-md">
+      <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+        <div class="flex items-center justify-between">
+          <div class="flex items-center space-x-4">
+            <div class="text-3xl">🧪</div>
+            <div>
+              <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+                PromptLab
+              </h1>
+              <p class="text-sm text-gray-500 dark:text-gray-400">
+                {{ llmStore.selectedModel?.providerName }} - {{ llmStore.selectedModel?.modelName }}
+              </p>
+            </div>
           </div>
-
-          <!-- Processor Block -->
-          <div ref="processorBlockRef">
-            <ProcessorBlock
-              :state="processingState"
-              :llm-name="currentLlm?.name"
-              :llm-model="currentLlm?.model"
-              :input-tokens="metrics.inputTokens"
-              :output-tokens="metrics.outputTokens"
-              :error-message="errorMessage"
-            />
-          </div>
-
-          <!-- Output Block -->
-          <div ref="outputBlockRef">
-            <OutputBlock
-              :output-text="promptOutput"
-              :is-loading="processingState === 'processing'"
-              :show-metrics="true"
-              :metrics="{
-                inputTokens: metrics.inputTokens,
-                outputTokens: metrics.outputTokens,
-                duration: metrics.duration,
-                totalCost: metrics.totalCost
-              }"
-            />
-          </div>
-        </div>
-
-        <!-- Connection Lines -->
-        <ConnectionLine
-          v-if="showConnections"
-          :x="line1.x"
-          :y="line1.y"
-          :width="line1.width"
-          :height="line1.height"
-          :start-x="10"
-          :start-y="line1.height / 2"
-          :end-x="line1.width - 10"
-          :end-y="line1.height / 2"
-          :animated="processingState === 'processing'"
-          start-color="#0ea5e9"
-          end-color="#06b6d4"
-          flow-color="#38bdf8"
-        />
-
-        <ConnectionLine
-          v-if="showConnections"
-          :x="line2.x"
-          :y="line2.y"
-          :width="line2.width"
-          :height="line2.height"
-          :start-x="10"
-          :start-y="line2.height / 2"
-          :end-x="line2.width - 10"
-          :end-y="line2.height / 2"
-          :animated="processingState === 'processing' || processingState === 'completed'"
-          start-color="#06b6d4"
-          end-color="#10b981"
-          flow-color="#34d399"
-        />
-
-        <!-- Action Buttons -->
-        <div class="flex justify-center gap-4">
           <button
-            @click="executePrompt"
-            :disabled="!canExecute"
-            class="px-8 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 
-                   text-white font-semibold rounded-lg shadow-lg 
-                   transition-all duration-200 transform hover:scale-105 
-                   disabled:cursor-not-allowed disabled:transform-none"
+            @click="changeModel"
+            class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
           >
-            {{ processingState === 'processing' ? '⚡ Processing...' : '🚀 Execute Prompt' }}
-          </button>
-
-          <button
-            v-if="processingState !== 'idle'"
-            @click="reset"
-            class="px-6 py-3 bg-gray-600 hover:bg-gray-700 text-white 
-                   font-semibold rounded-lg shadow-lg transition-colors duration-200"
-          >
-            🔄 Reset
+            Change Model
           </button>
         </div>
+      </div>
+    </header>
 
-        <!-- Summary Stats -->
-        <div v-if="promptOutput" class="mt-8 p-6 bg-white dark:bg-gray-800 rounded-lg shadow-lg">
-          <h3 class="text-lg font-semibold text-gray-900 dark:text-white mb-4">
-            📊 Execution Summary
-          </h3>
-          <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
-            <div class="text-center">
-              <div class="text-2xl font-bold text-blue-600 dark:text-blue-400">
-                {{ metrics.inputTokens + metrics.outputTokens }}
+    <!-- Main Content -->
+    <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <!-- Left Column: Prompt Input -->
+        <div class="lg:col-span-2 space-y-6">
+          <!-- Prompt Input Card -->
+          <div 
+            ref="promptCard"
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6"
+          >
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Prompt Input
+            </h2>
+            <textarea
+              v-model="promptStore.currentPrompt"
+              placeholder="Enter your prompt here..."
+              rows="8"
+              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+            ></textarea>
+            <div class="mt-4 flex items-center justify-between">
+              <div class="text-sm text-gray-500 dark:text-gray-400">
+                Characters: {{ promptStore.currentPrompt.length }}
               </div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Total Tokens</div>
+              <button
+                @click="executePrompt"
+                :disabled="!promptStore.currentPrompt.trim() || promptStore.isExecuting"
+                class="px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+              >
+                {{ promptStore.isExecuting ? 'Executing...' : 'Execute' }}
+              </button>
             </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-green-600 dark:text-green-400">
-                {{ formatDuration(metrics.duration) }}
-              </div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Duration</div>
+          </div>
+
+          <!-- Response Card -->
+          <div 
+            ref="responseCard"
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6"
+          >
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Response
+            </h2>
+            <div 
+              v-if="promptStore.currentResponse"
+              class="prose dark:prose-invert max-w-none p-4 bg-gray-50 dark:bg-gray-900 rounded-lg min-h-[200px]"
+            >
+              {{ promptStore.currentResponse }}
             </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-purple-600 dark:text-purple-400">
-                ${{ metrics.totalCost.toFixed(6) }}
-              </div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Estimated Cost</div>
+            <div 
+              v-else
+              class="text-gray-400 dark:text-gray-500 italic p-4 bg-gray-50 dark:bg-gray-900 rounded-lg min-h-[200px] flex items-center justify-center"
+            >
+              Response will appear here after execution
             </div>
-            <div class="text-center">
-              <div class="text-2xl font-bold text-pink-600 dark:text-pink-400">
-                {{ promptInput.length }}
+          </div>
+        </div>
+
+        <!-- Right Column: Metrics & History -->
+        <div class="space-y-6">
+          <!-- Metrics Card -->
+          <div 
+            ref="metricsCard"
+            class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6"
+          >
+            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+              Metrics
+            </h2>
+            <div class="space-y-3">
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600 dark:text-gray-400">Total Executions</span>
+                <span class="font-bold text-gray-900 dark:text-white">
+                  {{ metricsStore.totalExecutions }}
+                </span>
               </div>
-              <div class="text-sm text-gray-600 dark:text-gray-400">Characters</div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600 dark:text-gray-400">Total Tokens</span>
+                <span class="font-bold text-gray-900 dark:text-white">
+                  {{ metricsStore.totalTokensUsed.toLocaleString() }}
+                </span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600 dark:text-gray-400">Total Cost</span>
+                <span class="font-bold text-green-600 dark:text-green-400">
+                  ${{ metricsStore.totalCost.toFixed(4) }}
+                </span>
+              </div>
+              <div class="flex justify-between items-center">
+                <span class="text-gray-600 dark:text-gray-400">Avg Time</span>
+                <span class="font-bold text-gray-900 dark:text-white">
+                  {{ metricsStore.averageExecutionTime.toFixed(0) }}ms
+                </span>
+              </div>
+            </div>
+          </div>
+
+          <!-- History Card -->
+          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+                History
+              </h2>
+              <button
+                v-if="promptStore.hasHistory"
+                @click="promptStore.clearHistory"
+                class="text-sm text-red-600 hover:text-red-700 dark:text-red-400"
+              >
+                Clear
+              </button>
+            </div>
+            <div v-if="promptStore.hasHistory" class="space-y-2 max-h-[400px] overflow-y-auto">
+              <div
+                v-for="execution in promptStore.executionHistory.slice(0, 10)"
+                :key="execution.id"
+                class="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                @click="loadExecution(execution)"
+              >
+                <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                  {{ new Date(execution.timestamp).toLocaleTimeString() }}
+                </div>
+                <div class="text-sm text-gray-900 dark:text-white truncate">
+                  {{ truncatePrompt(execution.prompt) }}
+                </div>
+              </div>
+            </div>
+            <div v-else class="text-gray-400 dark:text-gray-500 italic text-center py-8">
+              No execution history yet
             </div>
           </div>
         </div>
       </div>
-    </div>
+    </main>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useRouter } from 'vue-router'
+import { gsap } from 'gsap'
 import { useLlmStore } from '@/stores/llmStore'
 import { usePromptStore } from '@/stores/promptStore'
 import { useMetricsStore } from '@/stores/metricsStore'
-import InputBlock from '@/components/prompt/InputBlock.vue'
-import ProcessorBlock from '@/components/prompt/ProcessorBlock.vue'
-import OutputBlock from '@/components/prompt/OutputBlock.vue'
-import ConnectionLine from '@/components/prompt/ConnectionLine.vue'
+import type { PromptExecution } from '@/stores/promptStore'
 
-// Stores
+// Constants
+const CHARS_PER_TOKEN = 4 // Rough approximation for token calculation
+const HISTORY_TRUNCATE_LENGTH = 60
+
+const router = useRouter()
 const llmStore = useLlmStore()
 const promptStore = usePromptStore()
 const metricsStore = useMetricsStore()
 
-// Refs for block positions
-const inputBlockRef = ref<HTMLDivElement>()
-const processorBlockRef = ref<HTMLDivElement>()
-const outputBlockRef = ref<HTMLDivElement>()
+const promptCard = ref<HTMLElement>()
+const responseCard = ref<HTMLElement>()
+const metricsCard = ref<HTMLElement>()
 
-// State
-const promptInput = ref('')
-const promptOutput = ref('')
-const processingState = ref<'idle' | 'processing' | 'completed' | 'error'>('idle')
-const errorMessage = ref('')
-const showConnections = ref(false)
+// Helper function to truncate prompt for display
+const truncatePrompt = (prompt: string) => {
+  return prompt.length > HISTORY_TRUNCATE_LENGTH
+    ? prompt.substring(0, HISTORY_TRUNCATE_LENGTH) + '...'
+    : prompt
+}
 
-// Connection line positions
-const line1 = ref({ x: 0, y: 0, width: 0, height: 0 })
-const line2 = ref({ x: 0, y: 0, width: 0, height: 0 })
-
-// Computed
-const currentLlm = computed(() => llmStore.selectedProvider || llmStore.availableProviders[0])
-
-const metrics = computed(() => ({
-  inputTokens: metricsStore.inputTokens,
-  outputTokens: metricsStore.outputTokens,
-  duration: metricsStore.duration,
-  totalCost: metricsStore.totalCost
-}))
-
-const canExecute = computed(() => {
-  return promptInput.value.trim().length > 0 && 
-         processingState.value !== 'processing' &&
-         currentLlm.value !== null
+onMounted(() => {
+  // Animate cards on mount with GSAP
+  gsap.from([promptCard.value, responseCard.value, metricsCard.value], {
+    y: 20,
+    opacity: 0,
+    duration: 0.6,
+    stagger: 0.1,
+    ease: 'power2.out'
+  })
 })
 
-// Methods
-function handleInputChange(value: string) {
-  promptStore.setInput(value)
-  // Estimate tokens for input
-  metricsStore.setInputTokens(Math.ceil(value.length / 4))
+function changeModel() {
+  router.push({ name: 'model-selection' })
 }
 
 async function executePrompt() {
-  if (!canExecute.value) return
+  if (!promptStore.currentPrompt.trim()) return
 
-  processingState.value = 'processing'
-  promptStore.setProcessingState('processing')
-  metricsStore.startTimer()
-  errorMessage.value = ''
+  promptStore.setExecuting(true)
+  
+  // Simulate prompt execution (replace with actual API call)
+  const startTime = Date.now()
   
   try {
-    // Simulate API call with timeout
-    await new Promise(resolve => setTimeout(resolve, 2000))
+    // Mock response - in real implementation, this would be an API call
+    await new Promise(resolve => setTimeout(resolve, 1500))
     
-    // Mock response
-    const mockResponse = `This is a mock response to your prompt: "${promptInput.value.substring(0, 50)}..."
+    const mockResponse = `This is a mock response to your prompt. In a real implementation, this would be the actual AI response from ${llmStore.selectedModel?.providerName}.`
+    const executionTime = Date.now() - startTime
     
-The system is functioning correctly with GSAP animations, Tailwind CSS styling, and component state management.
-
-Key features demonstrated:
-- Real-time token counting
-- Processing state visualization
-- Animated connection lines
-- Responsive layout
-- Metrics tracking`
-
-    promptOutput.value = mockResponse
-    promptStore.setOutput(mockResponse)
-    metricsStore.setOutputTokens(Math.ceil(mockResponse.length / 4))
-    metricsStore.stopTimer()
+    // Mock token counts (in real implementation, these would come from API)
+    const inputTokens = Math.ceil(promptStore.currentPrompt.length / CHARS_PER_TOKEN)
+    const outputTokens = Math.ceil(mockResponse.length / CHARS_PER_TOKEN)
+    const totalTokens = inputTokens + outputTokens
     
-    processingState.value = 'completed'
-    promptStore.setProcessingState('completed')
+    // Calculate cost
+    const inputCost = llmStore.selectedModel?.model?.inputCostPer1kTokens || 0
+    const outputCost = llmStore.selectedModel?.model?.outputCostPer1kTokens || 0
+    const cost = metricsStore.calculateCost(inputTokens, outputTokens, inputCost, outputCost)
     
-    // Add to history
-    promptStore.addToHistory({
-      id: Date.now().toString(),
-      input: promptInput.value,
-      output: mockResponse,
-      timestamp: new Date(),
-      status: 'completed'
+    // Update stores
+    promptStore.setResponse(mockResponse)
+    promptStore.addExecution({
+      prompt: promptStore.currentPrompt,
+      response: mockResponse,
+      success: true
+    })
+    
+    metricsStore.addMetrics({
+      inputTokens,
+      outputTokens,
+      totalTokens,
+      executionTimeMs: executionTime,
+      cost,
+      modelName: llmStore.selectedModel?.modelName || '',
+      providerName: llmStore.selectedModel?.providerName || ''
+    })
+    
+    // Animate response card
+    gsap.from(responseCard.value, {
+      scale: 0.98,
+      opacity: 0,
+      duration: 0.3,
+      ease: 'power2.out'
     })
   } catch (error) {
-    errorMessage.value = error instanceof Error ? error.message : 'Unknown error occurred'
-    processingState.value = 'error'
-    promptStore.setProcessingState('error')
-    metricsStore.stopTimer()
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
+    promptStore.addExecution({
+      prompt: promptStore.currentPrompt,
+      response: '',
+      success: false,
+      error: errorMessage
+    })
+  } finally {
+    promptStore.setExecuting(false)
   }
 }
 
-function reset() {
-  promptInput.value = ''
-  promptOutput.value = ''
-  processingState.value = 'idle'
-  errorMessage.value = ''
-  promptStore.reset()
-  metricsStore.reset()
-}
-
-function formatDuration(ms: number): string {
-  if (ms < 1000) return `${ms}ms`
-  return `${(ms / 1000).toFixed(2)}s`
-}
-
-function updateConnectionLines() {
-  if (!inputBlockRef.value || !processorBlockRef.value || !outputBlockRef.value) {
-    return
-  }
-
-  const inputRect = inputBlockRef.value.getBoundingClientRect()
-  const processorRect = processorBlockRef.value.getBoundingClientRect()
-  const outputRect = outputBlockRef.value.getBoundingClientRect()
-
-  // Line 1: Input to Processor
-  line1.value = {
-    x: inputRect.right,
-    y: inputRect.top + inputRect.height / 2 - 25,
-    width: processorRect.left - inputRect.right,
-    height: 50
-  }
-
-  // Line 2: Processor to Output
-  line2.value = {
-    x: processorRect.right,
-    y: processorRect.top + processorRect.height / 2 - 25,
-    width: outputRect.left - processorRect.right,
-    height: 50
-  }
-
-  showConnections.value = window.innerWidth >= 1024 // Only show on desktop
-}
-
-let resizeObserver: ResizeObserver | null = null
-
-onMounted(async () => {
-  // Select default LLM if none selected
-  if (!llmStore.selectedProvider && llmStore.availableProviders.length > 0) {
-    llmStore.selectProvider(llmStore.availableProviders[0])
-  }
-
-  await nextTick()
+function loadExecution(execution: PromptExecution) {
+  promptStore.setPrompt(execution.prompt)
+  promptStore.setResponse(execution.response)
   
-  // Update connection lines after mount
-  setTimeout(updateConnectionLines, 100)
-
-  // Watch for window resize
-  window.addEventListener('resize', updateConnectionLines)
-
-  // Use ResizeObserver for block size changes
-  resizeObserver = new ResizeObserver(updateConnectionLines)
-  if (inputBlockRef.value) resizeObserver.observe(inputBlockRef.value)
-  if (processorBlockRef.value) resizeObserver.observe(processorBlockRef.value)
-  if (outputBlockRef.value) resizeObserver.observe(outputBlockRef.value)
-})
-
-onUnmounted(() => {
-  window.removeEventListener('resize', updateConnectionLines)
-  if (resizeObserver) {
-    resizeObserver.disconnect()
-  }
-})
+  // Animate to show the loaded content
+  gsap.from([promptCard.value, responseCard.value], {
+    scale: 0.98,
+    duration: 0.3,
+    ease: 'power2.out'
+  })
+}
 </script>

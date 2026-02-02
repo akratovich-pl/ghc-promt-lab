@@ -1,56 +1,85 @@
 import { defineStore } from 'pinia'
-import { ref } from 'vue'
+import { ref, computed } from 'vue'
 
 export interface PromptExecution {
   id: string
-  input: string
-  output: string
   timestamp: Date
-  status: 'idle' | 'processing' | 'completed' | 'error'
+  prompt: string
+  response: string
+  success: boolean
+  error?: string
 }
 
 export const usePromptStore = defineStore('prompt', () => {
-  const currentInput = ref('')
-  const currentOutput = ref('')
+  // State
+  const currentPrompt = ref('')
+  const currentResponse = ref('')
   const executionHistory = ref<PromptExecution[]>([])
-  const processingState = ref<'idle' | 'processing' | 'completed' | 'error'>('idle')
+  const isExecuting = ref(false)
 
-  function setInput(input: string) {
-    currentInput.value = input
+  // Computed
+  const hasHistory = computed(() => executionHistory.value.length > 0)
+  const lastExecution = computed(() => 
+    executionHistory.value.length > 0 
+      ? executionHistory.value[0] 
+      : null
+  )
+
+  // Actions
+  function setPrompt(prompt: string) {
+    currentPrompt.value = prompt
   }
 
-  function setOutput(output: string) {
-    currentOutput.value = output
+  function setResponse(response: string) {
+    currentResponse.value = response
   }
 
-  function setProcessingState(state: 'idle' | 'processing' | 'completed' | 'error') {
-    processingState.value = state
-  }
-
-  function addToHistory(execution: PromptExecution) {
-    executionHistory.value.unshift(execution)
+  function addExecution(execution: Omit<PromptExecution, 'id' | 'timestamp'>) {
+    const newExecution: PromptExecution = {
+      id: crypto.randomUUID(),
+      timestamp: new Date(),
+      ...execution
+    }
+    
+    // Add to beginning of array (most recent first)
+    executionHistory.value.unshift(newExecution)
+    
+    // Keep only last 50 executions
+    if (executionHistory.value.length > 50) {
+      executionHistory.value = executionHistory.value.slice(0, 50)
+    }
   }
 
   function clearHistory() {
     executionHistory.value = []
   }
 
-  function reset() {
-    currentInput.value = ''
-    currentOutput.value = ''
-    processingState.value = 'idle'
+  function clearCurrent() {
+    currentPrompt.value = ''
+    currentResponse.value = ''
+  }
+
+  function setExecuting(value: boolean) {
+    isExecuting.value = value
   }
 
   return {
-    currentInput,
-    currentOutput,
+    // State
+    currentPrompt,
+    currentResponse,
     executionHistory,
-    processingState,
-    setInput,
-    setOutput,
-    setProcessingState,
-    addToHistory,
+    isExecuting,
+    // Computed
+    hasHistory,
+    lastExecution,
+    // Actions
+    setPrompt,
+    setResponse,
+    addExecution,
     clearHistory,
-    reset
+    clearCurrent,
+    setExecuting
   }
+}, {
+  persist: true
 })
