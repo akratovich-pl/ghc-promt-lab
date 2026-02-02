@@ -2,6 +2,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Logging;
 using PromptLab.Core.Domain.Entities;
 using PromptLab.Core.Domain.Enums;
+using PromptLab.Core.DTOs;
 using PromptLab.Core.Services.Interfaces;
 using PromptLab.Infrastructure.Data;
 using System.Diagnostics;
@@ -62,8 +63,8 @@ public class PromptExecutionService : IPromptExecutionService
             }
 
             // 2. Check rate limits
-            var rateLimitResult = await _rateLimitService.CheckRateLimitAsync(request.UserId, cancellationToken);
-            if (!rateLimitResult.IsAllowed)
+            var isAllowed = await _rateLimitService.CheckRateLimitAsync(request.UserId, cancellationToken);
+            if (!isAllowed)
             {
                 _logger.LogWarning("Rate limit exceeded. CorrelationId: {CorrelationId}, UserId: {UserId}",
                     correlationId, request.UserId);
@@ -71,7 +72,7 @@ public class PromptExecutionService : IPromptExecutionService
                 return new PromptExecutionResult
                 {
                     Success = false,
-                    ErrorMessage = rateLimitResult.Message ?? "Rate limit exceeded"
+                    ErrorMessage = "Rate limit exceeded"
                 };
             }
 
@@ -121,7 +122,7 @@ public class PromptExecutionService : IPromptExecutionService
                 cancellationToken);
 
             // 9. Record rate limit usage
-            await _rateLimitService.RecordUsageAsync(request.UserId, llmResponse.TokensUsed, cancellationToken);
+            await _rateLimitService.RecordRequestAsync(request.UserId, cancellationToken);
 
             _logger.LogInformation("Prompt execution completed successfully. CorrelationId: {CorrelationId}, " +
                 "PromptId: {PromptId}, ResponseId: {ResponseId}, Tokens: {Tokens}, Cost: {Cost}, Latency: {Latency}ms",
@@ -151,10 +152,8 @@ public class PromptExecutionService : IPromptExecutionService
 
         try
         {
-            var isAvailable = await _llmProvider.IsAvailableAsync(cancellationToken);
-            var models = isAvailable 
-                ? await _llmProvider.GetAvailableModelsAsync(cancellationToken) 
-                : Enumerable.Empty<string>();
+            var isAvailable = await _llmProvider.IsAvailable();
+            var models = Enumerable.Empty<string>();
 
             statuses.Add(new ProviderStatus
             {
@@ -164,11 +163,11 @@ public class PromptExecutionService : IPromptExecutionService
             });
 
             _logger.LogInformation("Provider status check completed. Provider: {Provider}, Available: {IsAvailable}",
-                _llmProvider.Provider, isAvailable);
+                _llmProvider.ProviderName, isAvailable);
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking provider status for {Provider}", _llmProvider.Provider);
+            _logger.LogError(ex, "Error checking provider status for {Provider}", _llmProvider.ProviderName);
             
             statuses.Add(new ProviderStatus
             {
@@ -252,7 +251,7 @@ public class PromptExecutionService : IPromptExecutionService
         }
 
         // Check provider availability
-        var isProviderAvailable = await _llmProvider.IsAvailableAsync(cancellationToken);
+        var isProviderAvailable = await _llmProvider.IsAvailable();
         if (!isProviderAvailable)
         {
             result.IsValid = false;
@@ -345,6 +344,7 @@ public class PromptExecutionService : IPromptExecutionService
     {
         var llmRequest = new LlmRequest
         {
+            Prompt = request.UserPrompt ?? string.Empty,
             Model = request.Model,
             SystemPrompt = request.SystemPrompt ?? string.Empty,
             ConversationHistory = conversationHistory,
@@ -416,7 +416,7 @@ public class PromptExecutionService : IPromptExecutionService
                 Context = request.SystemPrompt,
                 ContextFileId = contextFileId,
                 EstimatedTokens = 0, // Could be calculated with token counter
-                ActualTokens = llmResponse.TokensUsed,
+                ActualTokens = llmResponse.PromptTokens + llmResponse.CompletionTokens,
                 CreatedAt = DateTime.UtcNow
             };
 
@@ -430,7 +430,7 @@ public class PromptExecutionService : IPromptExecutionService
                 Provider = request.Provider,
                 Model = llmResponse.Model,
                 Content = llmResponse.Content,
-                Tokens = llmResponse.TokensUsed,
+                Tokens = llmResponse.PromptTokens + llmResponse.CompletionTokens,
                 Cost = llmResponse.Cost,
                 LatencyMs = latencyMs,
                 CreatedAt = DateTime.UtcNow

@@ -5,17 +5,50 @@ namespace PromptLab.Core.DTOs;
 /// <summary>
 /// Represents the response from an LLM provider after text generation.
 /// </summary>
-/// <param name="Content">The generated text content from the LLM. Must not be empty.</param>
-/// <param name="InputTokens">Number of tokens in the input prompt.</param>
-/// <param name="OutputTokens">Number of tokens in the generated output.</param>
-/// <param name="Cost">Estimated cost of the API call in USD.</param>
-/// <param name="LatencyMs">Request latency in milliseconds.</param>
-/// <param name="Model">The actual model used for generation.</param>
-public record LlmResponse(
-    [Required][MinLength(1)] string Content,
-    [Range(0, int.MaxValue)] int InputTokens,
-    [Range(0, int.MaxValue)] int OutputTokens,
-    [Range(0, double.MaxValue)] decimal Cost,
-    [Range(0, int.MaxValue)] int LatencyMs,
-    [Required][MinLength(1)] string Model
-);
+public class LlmResponse
+{
+    /// <summary>
+    /// The generated text content from the LLM
+    /// </summary>
+    public string Content { get; set; } = string.Empty;
+
+    /// <summary>
+    /// The model used for generation
+    /// </summary>
+    public string Model { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Number of tokens in the input prompt
+    /// </summary>
+    public int PromptTokens { get; set; }
+
+    /// <summary>
+    /// Number of tokens in the generated output
+    /// </summary>
+    public int CompletionTokens { get; set; }
+
+    /// <summary>
+    /// Estimated cost of the API call in USD
+    /// </summary>
+    public decimal Cost { get; set; }
+
+    /// <summary>
+    /// Request latency in milliseconds
+    /// </summary>
+    public long LatencyMs { get; set; }
+
+    /// <summary>
+    /// Reason why generation finished (e.g., "STOP", "MAX_TOKENS", "SAFETY")
+    /// </summary>
+    public string? FinishReason { get; set; }
+
+    /// <summary>
+    /// Whether the request was successful
+    /// </summary>
+    public bool Success { get; set; }
+
+    /// <summary>
+    /// Error message if the request failed
+    /// </summary>
+    public string? ErrorMessage { get; set; }
+}

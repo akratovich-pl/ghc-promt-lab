@@ -15,6 +15,11 @@ public interface ILlmProvider
     string ProviderName { get; }
 
     /// <summary>
+    /// Gets the provider type enum.
+    /// </summary>
+    AiProvider Provider { get; }
+
+    /// <summary>
     /// Generates text content using the LLM based on the provided request.
     /// </summary>
     /// <param name="request">The request containing prompt, model, and generation parameters.</param>
@@ -27,15 +32,15 @@ public interface ILlmProvider
     /// <summary>
     /// Estimates the number of tokens in the provided text for the specified model.
     /// </summary>
-    /// <param name="request">The request containing text and model for token estimation.</param>
+    /// <param name="prompt">The text to estimate tokens for.</param>
     /// <param name="cancellationToken">Token to cancel the operation.</param>
-    /// <returns>The response containing the estimated token count.</returns>
+    /// <returns>The estimated token count.</returns>
     /// <exception cref="InvalidOperationException">Thrown when the provider is not available or configured.</exception>
-    Task<TokenEstimateResponse> EstimateTokensAsync(TokenEstimateRequest request, CancellationToken cancellationToken = default);
+    Task<int> EstimateTokensAsync(string prompt, CancellationToken cancellationToken = default);
 
     /// <summary>
     /// Checks if the LLM provider is available and properly configured.
     /// </summary>
     /// <returns>True if the provider is ready to process requests; otherwise, false.</returns>
-    bool IsAvailable();
+    Task<bool> IsAvailable();
 }

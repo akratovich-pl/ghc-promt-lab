@@ -5,8 +5,9 @@ using System.Text.Json;
 using Microsoft.Extensions.Logging;
 using Polly;
 using Polly.Retry;
-using PromptLab.Core.Domain.DTOs;
-using PromptLab.Core.Domain.Interfaces;
+using PromptLab.Core.Domain.Enums;
+using PromptLab.Core.DTOs;
+using PromptLab.Core.Services.Interfaces;
 using PromptLab.Infrastructure.Configuration;
 using PromptLab.Infrastructure.Services.LlmProviders.Models;
 
@@ -24,6 +25,7 @@ public class GoogleGeminiProvider : ILlmProvider
     private readonly JsonSerializerOptions _jsonOptions;
 
     public string ProviderName => "Google Gemini";
+    public AiProvider Provider => AiProvider.Google;
 
     public GoogleGeminiProvider(
         GoogleGeminiConfig config,
@@ -312,7 +314,7 @@ public class GoogleGeminiProvider : ILlmProvider
         {
             geminiRequest.GenerationConfig = new GeminiGenerationConfig
             {
-                Temperature = request.Temperature,
+                Temperature = request.Temperature.HasValue ? (double?)request.Temperature.Value : null,
                 MaxOutputTokens = request.MaxTokens
             };
         }

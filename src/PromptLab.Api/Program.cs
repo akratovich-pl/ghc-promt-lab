@@ -1,17 +1,14 @@
 using Microsoft.EntityFrameworkCore;
 using PromptLab.Api.Models;
-using PromptLab.Core.Domain.Interfaces;
 using PromptLab.Infrastructure.Configuration;
 using PromptLab.Infrastructure.Data;
 using Serilog;
 using PromptLab.Api.Services;
 using PromptLab.Infrastructure.Services.LlmProviders;
 using Microsoft.OpenApi.Models;
-using PromptLab.Core.Application.Services;
 using System.Reflection;
 using PromptLab.Core.Configuration;
 using PromptLab.Core.Services.Interfaces;
-using PromptLab.Core.Interfaces;
 using PromptLab.Infrastructure.Services;
 using PromptLab.Api.Middleware;
 
@@ -28,9 +25,16 @@ Log.Logger = new LoggerConfiguration()
 try
 {
     Log.Information("Starting PromptLab API");
-// Add services to the container
-builder.Services.AddControllers();
-builder.Services.AddEndpointsApiExplorer();
+    
+    var builder = WebApplication.CreateBuilder(args);
+
+    // Add Serilog
+    builder.Host.UseSerilog();
+
+    // Add services to the container
+    builder.Services.AddSingleton<IStartupTimeService, StartupTimeService>();
+    builder.Services.AddControllers();
+    builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddSwaggerGen(options =>
 {
     options.SwaggerDoc("v1", new OpenApiInfo
@@ -54,33 +58,21 @@ builder.Services.AddSwaggerGen(options =>
     }
 });
 
-// Add ProblemDetails support
-builder.Services.AddProblemDetails();
+    // Add ProblemDetails support
+    builder.Services.AddProblemDetails();
 
-// Add Memory Cache for rate limiting
-builder.Services.AddMemoryCache();
+    // Add Memory Cache for rate limiting
+    builder.Services.AddMemoryCache();
 
-// Configure Rate Limiting Options
-builder.Services.Configure<RateLimitingOptions>(
-    builder.Configuration.GetSection(RateLimitingOptions.SectionName));
+    // Configure Rate Limiting Options
+    builder.Services.Configure<RateLimitingOptions>(
+        builder.Configuration.GetSection(RateLimitingOptions.SectionName));
 
-// Register Rate Limit Service
-builder.Services.AddSingleton<IRateLimitService, InMemoryRateLimitService>();
-// Add LLM Provider Configuration
-builder.Services.Configure<LlmProvidersOptions>(
-    builder.Configuration.GetSection(LlmProvidersOptions.SectionName));
-builder.Services.AddSingleton<ILlmProviderConfig, LlmProviderConfigService>();
+    // Register Rate Limit Service
+    builder.Services.AddScoped<IRateLimitService, InMemoryRateLimitService>();
 
-// Validate configuration on startup
-builder.Services.AddOptions<LlmProvidersOptions>()
-    .Bind(builder.Configuration.GetSection(LlmProvidersOptions.SectionName))
-    .ValidateDataAnnotations()
-    .ValidateOnStart();
-
-// Add HttpClient
-builder.Services.AddHttpClient();
-
-    var builder = WebApplication.CreateBuilder(args);
+    // Add HttpClient
+    builder.Services.AddHttpClient();
 
     // Add Serilog
     builder.Host.UseSerilog();
@@ -95,26 +87,29 @@ builder.Services.AddHttpClient();
     builder.Services.AddDbContext<ApplicationDbContext>(options =>
         options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
+    // Configure LLM Provider settings
+    var geminiConfig = new GoogleGeminiConfig();
+    builder.Configuration.GetSection(GoogleGeminiConfig.ConfigSectionName).Bind(geminiConfig);
+    builder.Services.AddSingleton(geminiConfig);
+
+    // Register HTTP client for LLM providers
+    builder.Services.AddHttpClient();
+
+    // Register LLM provider
+    builder.Services.AddSingleton<PromptLab.Core.Services.Interfaces.ILlmProvider, GoogleGeminiProvider>();
+    
+    // Register application services (using mock implementations for now)
+    builder.Services.AddScoped<PromptLab.Core.Application.Services.IProviderService, MockProviderService>();
+    builder.Services.AddScoped<PromptLab.Core.Application.Services.IPromptExecutionService, MockPromptExecutionService>();
+    
+    // Register rate limiting service
+    builder.Services.AddScoped<IRateLimitService, InMemoryRateLimitService>();
+
+    // Add memory cache for rate limiting
+    builder.Services.AddMemoryCache();
+
     // Add CORS
     builder.Services.AddCors(options =>
-// Configure LLM Provider settings
-var geminiConfig = new GoogleGeminiConfig();
-builder.Configuration.GetSection(GoogleGeminiConfig.ConfigSectionName).Bind(geminiConfig);
-builder.Services.AddSingleton(geminiConfig);
-
-// Register LLM providers
-builder.Services.AddSingleton<ILlmProvider, GoogleGeminiProvider>();
-// Register application services
-builder.Services.AddScoped<IPromptExecutionService, PromptExecutionService>();
-builder.Services.AddScoped<ILlmProvider, StubLlmProvider>(); // TODO: Replace with actual GoogleGemini provider
-builder.Services.AddScoped<IRateLimitService, StubRateLimitService>(); // TODO: Replace with actual rate limit service
-builder.Services.AddScoped<IPromptExecutionService, MockPromptExecutionService>();
-builder.Services.AddScoped<IProviderService, MockProviderService>();
-
-// Add CORS
-builder.Services.AddCors(options =>
-{
-    options.AddDefaultPolicy(policy =>
     {
         options.AddDefaultPolicy(policy =>
         {
@@ -161,35 +156,6 @@ finally
 {
     Log.CloseAndFlush();
 }
-// Configure the HTTP request pipeline
-if (app.Environment.IsDevelopment())
-{
-    app.UseSwagger();
-    app.UseSwaggerUI(options =>
-    {
-        options.SwaggerEndpoint("/swagger/v1/swagger.json", "PromptLab API v1");
-        options.RoutePrefix = "swagger";
-    });
-}
-
-// Use ProblemDetails middleware
-app.UseExceptionHandler();
-app.UseStatusCodePages();
-
-app.UseHttpsRedirection();
-
-// Add Rate Limiting Middleware (before CORS and Authorization)
-app.UseMiddleware<RateLimitMiddleware>();
-
-app.UseCors();
-app.UseAuthorization();
-app.MapControllers();
-
-app.MapGet("/api/health", () => Results.Ok(new { status = "healthy", timestamp = DateTime.UtcNow }))
-    .WithName("HealthCheck")
-    .WithTags("Health");
-
-app.Run();
 
 // Make the Program class accessible to integration tests
 public partial class Program { }
