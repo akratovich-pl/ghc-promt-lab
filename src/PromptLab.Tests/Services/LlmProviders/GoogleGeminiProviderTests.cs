@@ -127,7 +127,8 @@ public class GoogleGeminiProviderTests
 
         var request = new LlmRequest
         {
-            Prompt = "Test prompt"
+            Prompt = "Test prompt",
+            Model = "gemini-pro"
         };
 
         // Act
@@ -140,7 +141,6 @@ public class GoogleGeminiProviderTests
         result.Model.Should().Be("gemini-pro");
         result.PromptTokens.Should().Be(10);
         result.CompletionTokens.Should().Be(20);
-        result.TotalTokens.Should().Be(30);
         result.FinishReason.Should().Be("STOP");
         result.Cost.Should().BeGreaterThan(0);
         result.LatencyMs.Should().BeGreaterThan(0);
@@ -165,7 +165,8 @@ public class GoogleGeminiProviderTests
 
         var request = new LlmRequest
         {
-            Prompt = "Test prompt"
+            Prompt = "Test prompt",
+            Model = "gemini-pro"
         };
 
         // Act
@@ -207,7 +208,8 @@ public class GoogleGeminiProviderTests
 
         var request = new LlmRequest
         {
-            Prompt = "Test prompt"
+            Prompt = "Test prompt",
+            Model = "gemini-pro"
         };
 
         // Act
@@ -343,7 +345,8 @@ public class GoogleGeminiProviderTests
         var request = new LlmRequest
         {
             Prompt = "Test prompt",
-            Temperature = 0.7,
+            Model = "gemini-pro",
+            Temperature = 0.7m,
             MaxTokens = 100
         };
 

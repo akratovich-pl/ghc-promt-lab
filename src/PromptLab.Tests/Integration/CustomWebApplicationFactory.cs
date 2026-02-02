@@ -30,11 +30,16 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             {
                 options.UseInMemoryDatabase("TestDatabase");
             });
+        });
 
-            // Ensure the database is created
-            var serviceProvider = services.BuildServiceProvider();
-            using var scope = serviceProvider.CreateScope();
-            var db = scope.ServiceProvider.GetRequiredService<ApplicationDbContext>();
+        // Initialize database after the host is built
+        builder.ConfigureServices(services =>
+        {
+            var sp = services.BuildServiceProvider();
+            using var scope = sp.CreateScope();
+            var scopedServices = scope.ServiceProvider;
+            var db = scopedServices.GetRequiredService<ApplicationDbContext>();
+            db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
         });
 
