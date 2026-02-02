@@ -5,7 +5,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using Moq.Protected;
-using PromptLab.Core.Domain.DTOs;
+using PromptLab.Core.DTOs;
 using PromptLab.Infrastructure.Configuration;
 using PromptLab.Infrastructure.Services.LlmProviders;
 using PromptLab.Infrastructure.Services.LlmProviders.Models;

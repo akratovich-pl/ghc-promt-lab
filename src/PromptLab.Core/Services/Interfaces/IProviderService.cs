@@ -1,7 +1,7 @@
-using PromptLab.Core.Application.DTOs;
+using PromptLab.Core.DTOs;
 using PromptLab.Core.Domain.Enums;
 
-namespace PromptLab.Core.Application.Services;
+namespace PromptLab.Core.Services.Interfaces;
 
 /// <summary>
 /// Service for managing AI providers and models

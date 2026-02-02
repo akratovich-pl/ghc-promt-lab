@@ -1,4 +1,4 @@
-namespace PromptLab.Core.Application.DTOs;
+namespace PromptLab.Core.DTOs;
 
 /// <summary>
 /// Result of estimating tokens for a prompt

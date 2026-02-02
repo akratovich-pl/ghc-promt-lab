@@ -1,6 +1,6 @@
 using PromptLab.Core.Domain.Enums;
 
-namespace PromptLab.Core.Application.DTOs;
+namespace PromptLab.Core.DTOs;
 
 /// <summary>
 /// Result of executing a prompt

@@ -1,13 +1,12 @@
 using Microsoft.Extensions.Logging;
 using Microsoft.Extensions.Options;
-using PromptLab.Core.Interfaces;
 
 namespace PromptLab.Infrastructure.Configuration;
 
 /// <summary>
 /// Service for managing LLM provider configurations
 /// </summary>
-public class LlmProviderConfigService : ILlmProviderConfig
+public class LlmProviderConfigService
 {
     private readonly LlmProvidersOptions _options;
     private readonly ILogger<LlmProviderConfigService> _logger;

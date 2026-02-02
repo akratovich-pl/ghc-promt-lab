@@ -1,11 +1,9 @@
-using PromptLab.Core.Domain.Interfaces;
-
 namespace PromptLab.Infrastructure.Configuration;
 
 /// <summary>
 /// Configuration for LLM providers
 /// </summary>
-public class LlmProviderConfig : ILlmProviderConfig
+public class LlmProviderConfig
 {
     public const string SectionName = "LlmProviders";
 

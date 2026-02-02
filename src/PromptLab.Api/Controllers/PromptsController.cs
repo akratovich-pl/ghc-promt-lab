@@ -1,6 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
 using PromptLab.Api.Models;
-using PromptLab.Core.Application.Services;
+using PromptLab.Core.Services.Interfaces;
 
 namespace PromptLab.Api.Controllers;
 
