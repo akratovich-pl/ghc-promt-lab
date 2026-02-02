@@ -38,9 +38,8 @@ Use the following H2 sections (no H1, no H4+):
 1. `## Session Overview` - Brief 2-3 sentence summary
 2. `## Key Decisions` - Bulleted list of major decisions made
 3. `## Conversation Log` - Alternating Human/AI exchanges using H3
-4. `## Code Generated` - Code blocks with language specification
-5. `## Outcomes & Next Steps` - What was accomplished and what's next
-6. `## Reflection` - Learning points for training course
+4. `## Outcomes & Next Steps` - What was accomplished and what's next
+5. `## Reflection` - Learning points for training course
 
 ## Formatting Rules
 
@@ -61,7 +60,7 @@ Structure exchanges clearly:
 [User's question or request - keep original wording]
 
 ### AI Response
-[AI's response - can be summarized if very long, but preserve key points]
+[AI's response - must be summarized, but preserve key points]
 
 ---
 
