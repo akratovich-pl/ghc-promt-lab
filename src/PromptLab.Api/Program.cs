@@ -1,4 +1,5 @@
 using Microsoft.EntityFrameworkCore;
+using PromptLab.Api.Models;
 using PromptLab.Core.Domain.Interfaces;
 using PromptLab.Infrastructure.Configuration;
 using PromptLab.Infrastructure.Data;
