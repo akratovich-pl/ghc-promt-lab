@@ -3,8 +3,8 @@ using Microsoft.Extensions.Logging;
 using Moq;
 using PromptLab.Api.Controllers;
 using PromptLab.Api.Models;
-using PromptLab.Core.Application.DTOs;
-using PromptLab.Core.Application.Services;
+using PromptLab.Core.DTOs;
+using PromptLab.Core.Services.Interfaces;
 using PromptLab.Core.Domain.Enums;
 
 namespace PromptLab.Tests.Controllers;

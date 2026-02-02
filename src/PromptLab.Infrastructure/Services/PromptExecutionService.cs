@@ -6,6 +6,7 @@ using PromptLab.Core.DTOs;
 using PromptLab.Core.Services.Interfaces;
 using PromptLab.Infrastructure.Data;
 using System.Diagnostics;
+using IPromptExecutionService = PromptLab.Core.Services.Interfaces.IPromptExecutionService;
 
 namespace PromptLab.Infrastructure.Services;
 
@@ -36,232 +37,293 @@ public class PromptExecutionService : IPromptExecutionService
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
-    public async Task<PromptExecutionResult> ExecutePromptAsync(
-        PromptExecutionRequest request,
-        CancellationToken cancellationToken = default)
+    // Explicit interface implementations for Core.Services.Interfaces.IPromptExecutionService
+    async Task<Core.DTOs.PromptExecutionResult> Core.Services.Interfaces.IPromptExecutionService.ExecutePromptAsync(
+        string prompt,
+        string? systemPrompt,
+        Guid? conversationId,
+        List<Guid>? contextFileIds,
+        string? model,
+        int? maxTokens,
+        double? temperature,
+        CancellationToken cancellationToken)
     {
         var correlationId = Guid.NewGuid();
         var stopwatch = Stopwatch.StartNew();
+        var userId = "system"; // TODO: Get from auth context
+        var requestModel = model ?? "gemini-1.5-flash";
 
         _logger.LogInformation("Starting prompt execution. CorrelationId: {CorrelationId}, UserId: {UserId}",
-            correlationId, request.UserId);
+            correlationId, userId);
+
+        // 1. Validate input
+        if (string.IsNullOrWhiteSpace(prompt))
+        {
+            throw new ArgumentException("User prompt cannot be empty", nameof(prompt));
+        }
+
+        if (prompt.Length > MaxPromptLength)
+        {
+            throw new ArgumentException($"User prompt exceeds maximum length of {MaxPromptLength} characters", nameof(prompt));
+        }
+
+        // 2. Check rate limits
+        var isAllowed = await _rateLimitService.CheckRateLimitAsync(userId, cancellationToken);
+        if (!isAllowed)
+        {
+            _logger.LogWarning("Rate limit exceeded. CorrelationId: {CorrelationId}, UserId: {UserId}",
+                correlationId, userId);
+            throw new InvalidOperationException("Rate limit exceeded");
+        }
+
+        // 3. Load conversation history if provided
+        var conversationHistory = new List<ConversationMessage>();
+        
+        if (conversationId.HasValue)
+        {
+            var prompts = await _dbContext.Prompts
+                .Include(p => p.Responses)
+                .Where(p => p.ConversationId == conversationId.Value)
+                .OrderBy(p => p.CreatedAt)
+                .ToListAsync(cancellationToken);
+
+            foreach (var prevPrompt in prompts)
+            {
+                conversationHistory.Add(new ConversationMessage
+                {
+                    Role = "user",
+                    Content = prevPrompt.UserPrompt
+                });
+                
+                var prevResponse = prevPrompt.Responses?.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
+                if (prevResponse != null)
+                {
+                    conversationHistory.Add(new ConversationMessage
+                    {
+                        Role = "assistant",
+                        Content = prevResponse.Content
+                    });
+                }
+            }
+
+            _logger.LogInformation("Loaded {Count} previous messages from conversation {ConversationId}. CorrelationId: {CorrelationId}",
+                conversationHistory.Count, conversationId.Value, correlationId);
+        }
+
+        // 4. Load context files if provided
+        Guid? contextFileId = null;
+        string userPromptWithContext = prompt;
+        
+        if (contextFileIds?.Any() == true)
+        {
+            contextFileId = contextFileIds.First();
+            var contextFiles = await _dbContext.ContextFiles
+                .Where(cf => contextFileIds.Contains(cf.Id))
+                .ToListAsync(cancellationToken);
+
+            if (contextFiles.Any())
+            {
+                var contextBuilder = new System.Text.StringBuilder();
+                foreach (var file in contextFiles)
+                {
+                    try
+                    {
+                        if (File.Exists(file.StoragePath))
+                        {
+                            var content = await File.ReadAllTextAsync(file.StoragePath, cancellationToken);
+                            contextBuilder.AppendLine($"=== File: {file.FileName} ===");
+                            contextBuilder.AppendLine(content);
+                            contextBuilder.AppendLine();
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        _logger.LogError(ex, "Error reading context file: {FileId}", file.Id);
+                    }
+                }
+
+                var contextContent = contextBuilder.ToString();
+                if (!string.IsNullOrWhiteSpace(contextContent))
+                {
+                    userPromptWithContext = $"Context:\n{contextContent}\n\nUser Request:\n{prompt}";
+                }
+            }
+        }
+
+        // 5. Build LLM request
+        var llmRequest = new LlmRequest
+        {
+            Prompt = userPromptWithContext,
+            SystemPrompt = systemPrompt,
+            Model = requestModel,
+            ConversationHistory = conversationHistory,
+            MaxTokens = maxTokens,
+            Temperature = temperature.HasValue ? (decimal?)temperature.Value : null
+        };
+
+        // 6. Call LLM provider
+        _logger.LogInformation("Calling LLM provider with model {Model}. CorrelationId: {CorrelationId}",
+            requestModel, correlationId);
+
+        var llmResponse = await _llmProvider.GenerateAsync(llmRequest, cancellationToken);
+
+        stopwatch.Stop();
+
+        // 7. Save to database in a transaction
+        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
 
         try
         {
-            // 1. Validate input
-            var validationResult = await ValidatePromptAsync(request, cancellationToken);
-            if (!validationResult.IsValid)
+            // Ensure conversation exists or create new one
+            Guid actualConversationId;
+            if (conversationId.HasValue)
             {
-                _logger.LogWarning("Prompt validation failed. CorrelationId: {CorrelationId}, Errors: {Errors}",
-                    correlationId, string.Join(", ", validationResult.Errors));
-
-                return new PromptExecutionResult
+                actualConversationId = conversationId.Value;
+            }
+            else
+            {
+                var conversation = new Conversation
                 {
-                    Success = false,
-                    ErrorMessage = string.Join("; ", validationResult.Errors)
+                    Id = Guid.NewGuid(),
+                    UserId = userId,
+                    Title = prompt.Length > MaxConversationTitleLength 
+                        ? prompt[..TruncatedTitleLength] + "..." 
+                        : prompt,
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
                 };
+
+                _dbContext.Conversations.Add(conversation);
+                actualConversationId = conversation.Id;
+
+                _logger.LogInformation("Created new conversation {ConversationId}. CorrelationId: {CorrelationId}",
+                    actualConversationId, correlationId);
             }
 
-            // 2. Check rate limits
-            var isAllowed = await _rateLimitService.CheckRateLimitAsync(request.UserId, cancellationToken);
-            if (!isAllowed)
+            // Save Prompt entity
+            var promptEntity = new Prompt
             {
-                _logger.LogWarning("Rate limit exceeded. CorrelationId: {CorrelationId}, UserId: {UserId}",
-                    correlationId, request.UserId);
+                Id = Guid.NewGuid(),
+                ConversationId = actualConversationId,
+                UserPrompt = prompt,
+                Context = systemPrompt,
+                ContextFileId = contextFileId,
+                EstimatedTokens = 0,
+                ActualTokens = llmResponse.PromptTokens + llmResponse.CompletionTokens,
+                CreatedAt = DateTime.UtcNow
+            };
 
-                return new PromptExecutionResult
-                {
-                    Success = false,
-                    ErrorMessage = "Rate limit exceeded"
-                };
-            }
+            _dbContext.Prompts.Add(promptEntity);
 
-            // 3. Load conversation if provided
-            List<ConversationMessage> conversationHistory = new();
-            if (request.ConversationId.HasValue)
+            // Save Response entity
+            var responseEntity = new Response
             {
-                conversationHistory = await LoadConversationHistoryAsync(
-                    request.ConversationId.Value, 
-                    cancellationToken);
-                
-                _logger.LogInformation("Loaded {Count} messages from conversation {ConversationId}. CorrelationId: {CorrelationId}",
-                    conversationHistory.Count, request.ConversationId.Value, correlationId);
-            }
+                Id = Guid.NewGuid(),
+                PromptId = promptEntity.Id,
+                Provider = AiProvider.Google,
+                Model = llmResponse.Model,
+                Content = llmResponse.Content,
+                Tokens = llmResponse.PromptTokens + llmResponse.CompletionTokens,
+                Cost = llmResponse.Cost,
+                LatencyMs = (int)stopwatch.ElapsedMilliseconds,
+                CreatedAt = DateTime.UtcNow
+            };
 
-            // 4. Load context files if provided
-            string contextContent = string.Empty;
-            List<Guid> loadedContextFileIds = new();
-            if (request.ContextFileIds?.Any() == true)
+            _dbContext.Responses.Add(responseEntity);
+
+            // Update conversation timestamp
+            var existingConversation = await _dbContext.Conversations
+                .FirstOrDefaultAsync(c => c.Id == actualConversationId, cancellationToken);
+            if (existingConversation != null)
             {
-                var contextResult = await LoadContextFilesAsync(request.ContextFileIds, cancellationToken);
-                contextContent = contextResult.Content;
-                loadedContextFileIds = contextResult.FileIds;
-
-                _logger.LogInformation("Loaded {Count} context files. CorrelationId: {CorrelationId}",
-                    loadedContextFileIds.Count, correlationId);
+                existingConversation.UpdatedAt = DateTime.UtcNow;
             }
 
-            // 5. Build complete prompt with context
-            var llmRequest = BuildLlmRequest(request, conversationHistory, contextContent);
+            await _dbContext.SaveChangesAsync(cancellationToken);
+            await transaction.CommitAsync(cancellationToken);
 
-            // 6. Call provider's GenerateAsync()
-            _logger.LogInformation("Calling LLM provider {Provider} with model {Model}. CorrelationId: {CorrelationId}",
-                request.Provider, request.Model, correlationId);
-
-            var llmResponse = await _llmProvider.GenerateAsync(llmRequest, cancellationToken);
-
-            stopwatch.Stop();
-
-            // 7 & 8. Save to database in a transaction
-            var result = await SaveToDatabase(
-                request,
-                llmResponse,
-                (int)stopwatch.ElapsedMilliseconds,
-                loadedContextFileIds.FirstOrDefault(),
-                correlationId,
-                cancellationToken);
-
-            // 9. Record rate limit usage
-            await _rateLimitService.RecordRequestAsync(request.UserId, cancellationToken);
+            // 8. Record rate limit usage
+            await _rateLimitService.RecordRequestAsync(userId, cancellationToken);
 
             _logger.LogInformation("Prompt execution completed successfully. CorrelationId: {CorrelationId}, " +
                 "PromptId: {PromptId}, ResponseId: {ResponseId}, Tokens: {Tokens}, Cost: {Cost}, Latency: {Latency}ms",
-                correlationId, result.PromptId, result.ResponseId, result.TokensUsed, result.Cost, result.LatencyMs);
+                correlationId, promptEntity.Id, responseEntity.Id, responseEntity.Tokens, responseEntity.Cost, responseEntity.LatencyMs);
 
-            // 10. Return response with metadata
-            return result;
-        }
-        catch (Exception ex)
-        {
-            stopwatch.Stop();
-            _logger.LogError(ex, "Error executing prompt. CorrelationId: {CorrelationId}, UserId: {UserId}",
-                correlationId, request.UserId);
-
-            return new PromptExecutionResult
+            return new Core.DTOs.PromptExecutionResult
             {
-                Success = false,
-                ErrorMessage = "An error occurred while processing your request. Please try again later.",
-                LatencyMs = (int)stopwatch.ElapsedMilliseconds
+                PromptId = promptEntity.Id,
+                ResponseId = responseEntity.Id,
+                Content = responseEntity.Content,
+                InputTokens = llmResponse.PromptTokens,
+                OutputTokens = llmResponse.CompletionTokens,
+                Cost = responseEntity.Cost,
+                LatencyMs = responseEntity.LatencyMs,
+                Model = responseEntity.Model,
+                Provider = responseEntity.Provider,
+                CreatedAt = responseEntity.CreatedAt
             };
         }
+        catch (Exception)
+        {
+            await transaction.RollbackAsync(cancellationToken);
+            throw;
+        }
     }
 
-    public async Task<IEnumerable<ProviderStatus>> GetProviderStatusAsync(CancellationToken cancellationToken = default)
+    async Task<Core.DTOs.TokenEstimate> Core.Services.Interfaces.IPromptExecutionService.EstimateTokensAsync(
+        string prompt,
+        string? model,
+        CancellationToken cancellationToken)
     {
-        var statuses = new List<ProviderStatus>();
-
         try
         {
-            var isAvailable = await _llmProvider.IsAvailable();
-            var models = Enumerable.Empty<string>();
+            var tokenCount = await _llmProvider.EstimateTokensAsync(prompt, cancellationToken);
+            // Simple cost estimation - this should ideally come from configuration
+            var estimatedCost = tokenCount * 0.00001m; // Rough estimate
 
-            statuses.Add(new ProviderStatus
+            return new Core.DTOs.TokenEstimate
             {
-                Provider = _llmProvider.Provider,
-                IsAvailable = isAvailable,
-                AvailableModels = models
-            });
-
-            _logger.LogInformation("Provider status check completed. Provider: {Provider}, Available: {IsAvailable}",
-                _llmProvider.ProviderName, isAvailable);
+                TokenCount = tokenCount,
+                EstimatedCost = estimatedCost,
+                Model = model ?? "gemini-1.5-flash"
+            };
         }
         catch (Exception ex)
         {
-            _logger.LogError(ex, "Error checking provider status for {Provider}", _llmProvider.ProviderName);
-            
-            statuses.Add(new ProviderStatus
-            {
-                Provider = _llmProvider.Provider,
-                IsAvailable = false,
-                ErrorMessage = ex.Message
-            });
+            _logger.LogError(ex, "Error estimating tokens for prompt");
+            throw;
         }
-
-        return statuses;
     }
 
-    public async Task<ValidationResult> ValidatePromptAsync(
-        PromptExecutionRequest request,
-        CancellationToken cancellationToken = default)
+    async Task<Core.DTOs.PromptExecutionResult?> Core.Services.Interfaces.IPromptExecutionService.GetPromptByIdAsync(
+        Guid promptId,
+        CancellationToken cancellationToken)
     {
-        var result = new ValidationResult { IsValid = true };
+        var prompt = await _dbContext.Prompts
+            .Include(p => p.Responses)
+            .FirstOrDefaultAsync(p => p.Id == promptId, cancellationToken);
 
-        // Validate prompt not empty
-        if (string.IsNullOrWhiteSpace(request.UserPrompt))
+        if (prompt == null)
+            return null;
+
+        var response = prompt.Responses?.FirstOrDefault();
+
+        return new Core.DTOs.PromptExecutionResult
         {
-            result.IsValid = false;
-            result.Errors.Add("User prompt cannot be empty");
-        }
-
-        // Validate prompt length
-        if (request.UserPrompt?.Length > MaxPromptLength)
-        {
-            result.IsValid = false;
-            result.Errors.Add($"User prompt exceeds maximum length of {MaxPromptLength} characters");
-        }
-
-        // Validate model specified
-        if (string.IsNullOrWhiteSpace(request.Model))
-        {
-            result.IsValid = false;
-            result.Errors.Add("Model must be specified");
-        }
-
-        // Validate user ID
-        if (string.IsNullOrWhiteSpace(request.UserId))
-        {
-            result.IsValid = false;
-            result.Errors.Add("User ID is required");
-        }
-
-        // Validate context files count
-        if (request.ContextFileIds?.Count > MaxContextFilesCount)
-        {
-            result.IsValid = false;
-            result.Errors.Add($"Cannot attach more than {MaxContextFilesCount} context files");
-        }
-
-        // Validate conversation exists if provided
-        if (request.ConversationId.HasValue)
-        {
-            var conversationExists = await _dbContext.Conversations
-                .AnyAsync(c => c.Id == request.ConversationId.Value, cancellationToken);
-
-            if (!conversationExists)
-            {
-                result.IsValid = false;
-                result.Errors.Add($"Conversation with ID {request.ConversationId.Value} not found");
-            }
-        }
-
-        // Validate context files exist
-        if (request.ContextFileIds?.Any() == true)
-        {
-            var existingFileIds = await _dbContext.ContextFiles
-                .Where(cf => request.ContextFileIds.Contains(cf.Id))
-                .Select(cf => cf.Id)
-                .ToListAsync(cancellationToken);
-
-            var missingFileIds = request.ContextFileIds.Except(existingFileIds).ToList();
-            if (missingFileIds.Any())
-            {
-                result.IsValid = false;
-                result.Errors.Add($"Context files not found: {string.Join(", ", missingFileIds)}");
-            }
-        }
-
-        // Check provider availability
-        var isProviderAvailable = await _llmProvider.IsAvailable();
-        if (!isProviderAvailable)
-        {
-            result.IsValid = false;
-            result.Errors.Add($"Provider {request.Provider} is not available");
-        }
-
-        return result;
+            PromptId = prompt.Id,
+            ResponseId = response?.Id ?? Guid.Empty,
+            Content = response?.Content ?? string.Empty,
+            InputTokens = response?.Tokens / 2 ?? 0, // Rough split since we don't have separate counts
+            OutputTokens = response?.Tokens / 2 ?? 0,
+            Cost = response?.Cost ?? 0,
+            LatencyMs = response?.LatencyMs ?? 0,
+            Model = response?.Model ?? "unknown",
+            Provider = response?.Provider ?? AiProvider.Google,
+            CreatedAt = response?.CreatedAt ?? prompt.CreatedAt
+        };
     }
 
-    private async Task<List<ConversationMessage>> LoadConversationHistoryAsync(
+    async Task<List<Core.DTOs.PromptExecutionResult>> Core.Services.Interfaces.IPromptExecutionService.GetPromptsByConversationIdAsync(
         Guid conversationId,
         CancellationToken cancellationToken)
     {
@@ -271,201 +333,25 @@ public class PromptExecutionService : IPromptExecutionService
             .OrderBy(p => p.CreatedAt)
             .ToListAsync(cancellationToken);
 
-        var messages = new List<ConversationMessage>();
-
-        foreach (var prompt in prompts)
+        return prompts.Select(p =>
         {
-            // Add user message
-            messages.Add(new ConversationMessage
+            var response = p.Responses?.FirstOrDefault();
+            return new Core.DTOs.PromptExecutionResult
             {
-                Role = "user",
-                Content = prompt.UserPrompt
-            });
-
-            // Add assistant response (taking the first/most recent response)
-            var response = prompt.Responses.OrderByDescending(r => r.CreatedAt).FirstOrDefault();
-            if (response != null)
-            {
-                messages.Add(new ConversationMessage
-                {
-                    Role = "assistant",
-                    Content = response.Content
-                });
-            }
-        }
-
-        return messages;
-    }
-
-    private async Task<(string Content, List<Guid> FileIds)> LoadContextFilesAsync(
-        List<Guid> contextFileIds,
-        CancellationToken cancellationToken)
-    {
-        var contextFiles = await _dbContext.ContextFiles
-            .Where(cf => contextFileIds.Contains(cf.Id))
-            .ToListAsync(cancellationToken);
-
-        var contentBuilder = new System.Text.StringBuilder();
-        var loadedFileIds = new List<Guid>();
-
-        foreach (var file in contextFiles)
-        {
-            try
-            {
-                // Read file content from storage path
-                if (File.Exists(file.StoragePath))
-                {
-                    var content = await File.ReadAllTextAsync(file.StoragePath, cancellationToken);
-                    contentBuilder.AppendLine($"=== File: {file.FileName} ===");
-                    contentBuilder.AppendLine(content);
-                    contentBuilder.AppendLine();
-                    loadedFileIds.Add(file.Id);
-                }
-                else
-                {
-                    _logger.LogWarning("Context file not found at path: {Path}, FileId: {FileId}",
-                        file.StoragePath, file.Id);
-                }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogError(ex, "Error reading context file: {FileId}, Path: {Path}",
-                    file.Id, file.StoragePath);
-            }
-        }
-
-        return (contentBuilder.ToString(), loadedFileIds);
-    }
-
-    private LlmRequest BuildLlmRequest(
-        PromptExecutionRequest request,
-        List<ConversationMessage> conversationHistory,
-        string contextContent)
-    {
-        var llmRequest = new LlmRequest
-        {
-            Prompt = request.UserPrompt ?? string.Empty,
-            Model = request.Model,
-            SystemPrompt = request.SystemPrompt ?? string.Empty,
-            ConversationHistory = conversationHistory,
-            MaxTokens = request.MaxTokens,
-            Temperature = request.Temperature
-        };
-
-        // Build user prompt with context
-        if (!string.IsNullOrEmpty(contextContent))
-        {
-            llmRequest.UserPrompt = $"Context:\n{contextContent}\n\nUser Request:\n{request.UserPrompt}";
-        }
-        else
-        {
-            llmRequest.UserPrompt = request.UserPrompt;
-        }
-
-        return llmRequest;
-    }
-
-    private async Task<PromptExecutionResult> SaveToDatabase(
-        PromptExecutionRequest request,
-        LlmResponse llmResponse,
-        int latencyMs,
-        Guid? contextFileId,
-        Guid correlationId,
-        CancellationToken cancellationToken)
-    {
-        using var transaction = await _dbContext.Database.BeginTransactionAsync(cancellationToken);
-
-        try
-        {
-            // Ensure conversation exists or create new one
-            Guid conversationId;
-            if (request.ConversationId.HasValue)
-            {
-                conversationId = request.ConversationId.Value;
-            }
-            else
-            {
-                // Create a new conversation
-                var conversation = new Conversation
-                {
-                    Id = Guid.NewGuid(),
-                    UserId = request.UserId,
-                    Title = request.UserPrompt.Length > MaxConversationTitleLength 
-                        ? request.UserPrompt[..TruncatedTitleLength] + "..." 
-                        : request.UserPrompt,
-                    CreatedAt = DateTime.UtcNow,
-                    UpdatedAt = DateTime.UtcNow
-                };
-
-                _dbContext.Conversations.Add(conversation);
-                conversationId = conversation.Id;
-
-                _logger.LogInformation("Created new conversation {ConversationId}. CorrelationId: {CorrelationId}",
-                    conversationId, correlationId);
-            }
-
-            // Save Prompt entity
-            // Note: Current schema only supports a single ContextFileId. 
-            // If multiple context files are loaded, only the first is persisted.
-            // Consider updating Prompt entity to support multiple context files in the future.
-            var prompt = new Prompt
-            {
-                Id = Guid.NewGuid(),
-                ConversationId = conversationId,
-                UserPrompt = request.UserPrompt,
-                Context = request.SystemPrompt,
-                ContextFileId = contextFileId,
-                EstimatedTokens = 0, // Could be calculated with token counter
-                ActualTokens = llmResponse.PromptTokens + llmResponse.CompletionTokens,
-                CreatedAt = DateTime.UtcNow
+                PromptId = p.Id,
+                ResponseId = response?.Id ?? Guid.Empty,
+                Content = response?.Content ?? string.Empty,
+                InputTokens = response?.Tokens / 2 ?? 0, // Rough split since we don't have separate counts
+                OutputTokens = response?.Tokens / 2 ?? 0,
+                Cost = response?.Cost ?? 0,
+                LatencyMs = response?.LatencyMs ?? 0,
+                Model = response?.Model ?? "unknown",
+                Provider = response?.Provider ?? AiProvider.Google,
+                CreatedAt = response?.CreatedAt ?? p.CreatedAt
             };
-
-            _dbContext.Prompts.Add(prompt);
-
-            // Save Response entity
-            var response = new Response
-            {
-                Id = Guid.NewGuid(),
-                PromptId = prompt.Id,
-                Provider = request.Provider,
-                Model = llmResponse.Model,
-                Content = llmResponse.Content,
-                Tokens = llmResponse.PromptTokens + llmResponse.CompletionTokens,
-                Cost = llmResponse.Cost,
-                LatencyMs = latencyMs,
-                CreatedAt = DateTime.UtcNow
-            };
-
-            _dbContext.Responses.Add(response);
-
-            // Update conversation timestamp
-            var existingConversation = await _dbContext.Conversations
-                .FirstOrDefaultAsync(c => c.Id == conversationId, cancellationToken);
-            if (existingConversation != null)
-            {
-                existingConversation.UpdatedAt = DateTime.UtcNow;
-            }
-
-            await _dbContext.SaveChangesAsync(cancellationToken);
-            await transaction.CommitAsync(cancellationToken);
-
-            return new PromptExecutionResult
-            {
-                PromptId = prompt.Id,
-                ResponseId = response.Id,
-                Content = response.Content,
-                TokensUsed = response.Tokens,
-                Cost = response.Cost,
-                LatencyMs = response.LatencyMs,
-                Success = true
-            };
-        }
-        catch (Exception ex)
-        {
-            await transaction.RollbackAsync(cancellationToken);
-            _logger.LogError(ex, "Error saving prompt/response to database. CorrelationId: {CorrelationId}",
-                correlationId);
-            throw;
-        }
+        }).ToList();
     }
 }
+
+
+
