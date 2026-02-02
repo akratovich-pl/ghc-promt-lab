@@ -9,46 +9,48 @@ public class LlmRequestTests
     public void LlmRequest_WithValidData_ShouldCreateSuccessfully()
     {
         // Arrange & Act
-        var request = new LlmRequest(
-            Prompt: "Test prompt",
-            SystemPrompt: "Test system prompt",
-            Model: "gemini-pro",
-            MaxTokens: 1024,
-            Temperature: 0.5
-        );
+        var request = new LlmRequest
+        {
+            Prompt = "Test prompt",
+            SystemPrompt = "Test system prompt",
+            Model = "gemini-pro",
+            MaxTokens = 1024,
+            Temperature = 0.5m
+        };
 
         // Assert
         Assert.Equal("Test prompt", request.Prompt);
         Assert.Equal("Test system prompt", request.SystemPrompt);
         Assert.Equal("gemini-pro", request.Model);
         Assert.Equal(1024, request.MaxTokens);
-        Assert.Equal(0.5, request.Temperature);
+        Assert.Equal(0.5m, request.Temperature);
     }
 
     [Fact]
     public void LlmRequest_WithDefaultValues_ShouldUseDefaults()
     {
         // Arrange & Act
-        var request = new LlmRequest(
-            Prompt: "Test prompt",
-            SystemPrompt: null,
-            Model: "gemini-pro"
-        );
+        var request = new LlmRequest
+        {
+            Prompt = "Test prompt",
+            Model = "gemini-pro"
+        };
 
         // Assert
         Assert.Equal(2048, request.MaxTokens);
-        Assert.Equal(0.7, request.Temperature);
+        Assert.Equal(0.7m, request.Temperature);
     }
 
     [Fact]
     public void LlmRequest_WithNullSystemPrompt_ShouldBeValid()
     {
         // Arrange & Act
-        var request = new LlmRequest(
-            Prompt: "Test prompt",
-            SystemPrompt: null,
-            Model: "gemini-pro"
-        );
+        var request = new LlmRequest
+        {
+            Prompt = "Test prompt",
+            SystemPrompt = null,
+            Model = "gemini-pro"
+        };
 
         // Assert
         Assert.Null(request.SystemPrompt);
@@ -64,15 +66,15 @@ public class LlmRequestTests
     public void LlmRequest_WithValidTemperature_ShouldBeValid(double temperature)
     {
         // Arrange & Act
-        var request = new LlmRequest(
-            Prompt: "Test prompt",
-            SystemPrompt: null,
-            Model: "gemini-pro",
-            Temperature: temperature
-        );
+        var request = new LlmRequest
+        {
+            Prompt = "Test prompt",
+            Model = "gemini-pro",
+            Temperature = (decimal)temperature
+        };
 
         // Assert
-        Assert.Equal(temperature, request.Temperature);
+        Assert.Equal((decimal)temperature, request.Temperature);
     }
 
     [Theory]
@@ -82,12 +84,12 @@ public class LlmRequestTests
     public void LlmRequest_WithValidMaxTokens_ShouldBeValid(int maxTokens)
     {
         // Arrange & Act
-        var request = new LlmRequest(
-            Prompt: "Test prompt",
-            SystemPrompt: null,
-            Model: "gemini-pro",
-            MaxTokens: maxTokens
-        );
+        var request = new LlmRequest
+        {
+            Prompt = "Test prompt",
+            Model = "gemini-pro",
+            MaxTokens = maxTokens
+        };
 
         // Assert
         Assert.Equal(maxTokens, request.MaxTokens);
