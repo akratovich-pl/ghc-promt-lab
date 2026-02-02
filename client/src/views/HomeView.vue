@@ -18,10 +18,21 @@
         </p>
       </div>
 
-      <!-- Main Content -->
-      <div class="grid grid-cols-1 gap-6">
-        <!-- Model Selection -->
-        <ModelSelection />
+    <div class="flex gap-4">
+      <button
+        @click="animateRocket"
+        class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-lg transition-colors duration-200"
+      >
+        Test Animation (GSAP)
+      </button>
+      
+      <router-link
+        to="/lab"
+        class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg transition-colors duration-200"
+      >
+        🧪 Open Prompt Lab
+      </router-link>
+    </div>
 
         <!-- Input and Output in 2-column layout on larger screens -->
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
