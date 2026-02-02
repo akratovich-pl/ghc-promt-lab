@@ -23,6 +23,11 @@ const router = createRouter({
       path: '/demo',
       name: 'demo',
       component: () => import('@/views/HomeView.vue')
+    },
+    {
+      path: '/lab',
+      name: 'prompt-lab',
+      component: () => import('@/views/PromptLabView.vue')
     }
   ]
 })
