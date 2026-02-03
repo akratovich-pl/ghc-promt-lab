@@ -1,5 +1,13 @@
 using Serilog;
 using PromptLab.Api;
+using DotNetEnv;
+
+// Load environment variables from .env file
+var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env");
+if (File.Exists(envPath))
+{
+    Env.Load(envPath);
+}
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()

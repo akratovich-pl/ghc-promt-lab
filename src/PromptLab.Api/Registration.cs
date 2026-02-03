@@ -70,13 +70,22 @@ public static class Registration
         // Configure LLM Provider settings
         var geminiConfig = new GoogleGeminiConfig();
         builder.Configuration.GetSection(GoogleGeminiConfig.ConfigSectionName).Bind(geminiConfig);
+        // Override API key from environment variable
+        geminiConfig.ApiKey = Environment.GetEnvironmentVariable("GOOGLE_API_KEY") ?? string.Empty;
         builder.Services.AddSingleton(geminiConfig);
 
-        // Register LLM provider
-        builder.Services.AddSingleton<PromptLab.Core.Services.Interfaces.ILlmProvider, GoogleGeminiProvider>();
+        var groqConfig = new GroqConfig();
+        builder.Configuration.GetSection(GroqConfig.ConfigSectionName).Bind(groqConfig);
+        // Override API key from environment variable
+        groqConfig.ApiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY") ?? string.Empty;
+        builder.Services.AddSingleton(groqConfig);
+
+        // Register LLM providers
+        builder.Services.AddSingleton<ILlmProvider, GoogleGeminiProvider>();
+        builder.Services.AddSingleton<ILlmProvider, GroqProvider>();
 
         // Register application services
-        builder.Services.AddScoped<IProviderService, MockProviderService>(); // TODO: Implement real ProviderService
+        builder.Services.AddScoped<IProviderService, ConfigurationProviderService>();
         builder.Services.AddScoped<IPromptExecutionService, PromptExecutionService>();
 
         // Register rate limiting service
