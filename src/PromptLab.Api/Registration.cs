@@ -67,17 +67,37 @@ public static class Registration
         builder.Services.AddDbContext<ApplicationDbContext>(options =>
             options.UseSqlite(builder.Configuration.GetConnectionString("DefaultConnection")));
 
-        // Configure LLM Provider settings
+        // Configure LLM Provider settings from unified Providers configuration
         var geminiConfig = new GoogleGeminiConfig();
-        builder.Configuration.GetSection(GoogleGeminiConfig.ConfigSectionName).Bind(geminiConfig);
+        var geminiSection = builder.Configuration.GetSection("Providers:Google");
+        geminiSection.Bind(geminiConfig);
+        geminiConfig.Model = geminiSection.GetValue<string>("DefaultModel") ?? "gemini-pro";
         // Override API key from environment variable
         geminiConfig.ApiKey = Environment.GetEnvironmentVariable("GOOGLE_API_KEY") ?? string.Empty;
+        // Set default cost from the first model in the Models array (or use configured values as fallback)
+        var geminiModels = geminiSection.GetSection("Models").Get<List<Core.Configuration.ModelSettings>>();
+        if (geminiModels != null && geminiModels.Count > 0)
+        {
+            var defaultModel = geminiModels[0]; // Use first model as default for cost calculation
+            geminiConfig.InputTokenCostPer1K = defaultModel.InputCostPer1kTokens;
+            geminiConfig.OutputTokenCostPer1K = defaultModel.OutputCostPer1kTokens;
+        }
         builder.Services.AddSingleton(geminiConfig);
 
         var groqConfig = new GroqConfig();
-        builder.Configuration.GetSection(GroqConfig.ConfigSectionName).Bind(groqConfig);
+        var groqSection = builder.Configuration.GetSection("Providers:Groq");
+        groqSection.Bind(groqConfig);
+        groqConfig.Model = groqSection.GetValue<string>("DefaultModel") ?? "llama-3.3-70b-versatile";
         // Override API key from environment variable
         groqConfig.ApiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY") ?? string.Empty;
+        // Set default cost from the first model in the Models array (or use configured values as fallback)
+        var groqModels = groqSection.GetSection("Models").Get<List<Core.Configuration.ModelSettings>>();
+        if (groqModels != null && groqModels.Count > 0)
+        {
+            var defaultModel = groqModels[0]; // Use first model as default for cost calculation
+            groqConfig.InputTokenCostPer1K = defaultModel.InputCostPer1kTokens;
+            groqConfig.OutputTokenCostPer1K = defaultModel.OutputCostPer1kTokens;
+        }
         builder.Services.AddSingleton(groqConfig);
 
         // Register LLM providers

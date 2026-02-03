@@ -16,6 +16,26 @@ public class ProviderSettings
     public string BaseUrl { get; set; } = string.Empty;
 
     /// <summary>
+    /// API version (e.g., "v1")
+    /// </summary>
+    public string ApiVersion { get; set; } = "v1";
+
+    /// <summary>
+    /// Maximum number of retry attempts
+    /// </summary>
+    public int MaxRetries { get; set; } = 3;
+
+    /// <summary>
+    /// Request timeout in seconds
+    /// </summary>
+    public int TimeoutSeconds { get; set; } = 30;
+
+    /// <summary>
+    /// Default model to use for this provider
+    /// </summary>
+    public string DefaultModel { get; set; } = string.Empty;
+
+    /// <summary>
     /// Collection of models available from this provider
     /// </summary>
     public List<ModelSettings> Models { get; set; } = new();

@@ -19,7 +19,7 @@ public class LlmProviderConfig
 /// </summary>
 public class GoogleGeminiConfig : LlmProviderConfig
 {
-    public const string ConfigSectionName = "LlmProviders:GoogleGemini";
+    public const string ConfigSectionName = "Providers:Google";
 
     /// <summary>
     /// API version (default: v1)

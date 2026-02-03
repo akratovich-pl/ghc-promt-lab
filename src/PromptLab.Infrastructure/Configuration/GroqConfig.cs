@@ -5,7 +5,7 @@ namespace PromptLab.Infrastructure.Configuration;
 /// </summary>
 public class GroqConfig : LlmProviderConfig
 {
-    public const string ConfigSectionName = "LlmProviders:Groq";
+    public const string ConfigSectionName = "Providers:Groq";
 
     /// <summary>
     /// API version (default: v1)
