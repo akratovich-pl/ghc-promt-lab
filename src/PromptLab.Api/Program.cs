@@ -3,10 +3,22 @@ using PromptLab.Api;
 using DotNetEnv;
 
 // Load environment variables from .env file
-var envPath = Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env");
-if (File.Exists(envPath))
+// Try multiple potential paths for .env file
+var envPaths = new[]
 {
-    Env.Load(envPath);
+    Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+    Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env"),
+    Path.Combine(AppContext.BaseDirectory, ".env"),
+    Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".env")
+};
+
+foreach (var envPath in envPaths)
+{
+    if (File.Exists(envPath))
+    {
+        Env.Load(envPath);
+        break;
+    }
 }
 
 // Configure Serilog

@@ -51,7 +51,7 @@ public class ConfigurationProviderService : IProviderService
                 isAvailable = await llmProvider.IsAvailable();
             }
 
-            var supportedModels = providerSettings.Models.Select(m => m.Name).ToList();
+            var supportedModels = providerSettings.Models?.Select(m => m.Name).ToList() ?? new List<string>();
 
             providers.Add(new ProviderInfo
             {
