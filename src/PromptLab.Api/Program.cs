@@ -1,5 +1,7 @@
 using Serilog;
 using PromptLab.Api;
+using PromptLab.Infrastructure.Data;
+using Microsoft.EntityFrameworkCore;
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
@@ -24,6 +26,23 @@ try
     Registration.ConfigureServices(builder);
 
     var app = builder.Build();
+
+    // Ensure database is created and migrations are applied
+    using (var scope = app.Services.CreateScope())
+    {
+        var services = scope.ServiceProvider;
+        try
+        {
+            var context = services.GetRequiredService<ApplicationDbContext>();
+            context.Database.Migrate();
+            Log.Information("Database migrations applied successfully");
+        }
+        catch (Exception ex)
+        {
+            Log.Error(ex, "An error occurred while migrating the database");
+            throw;
+        }
+    }
 
     // Add request logging
     app.UseSerilogRequestLogging(options =>
