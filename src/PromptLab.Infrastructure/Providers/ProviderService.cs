@@ -3,24 +3,25 @@ using Microsoft.Extensions.Logging;
 using PromptLab.Core.Configuration;
 using PromptLab.Core.Domain.Enums;
 using PromptLab.Core.DTOs;
-using PromptLab.Core.Services.Interfaces;
+using PromptLab.Core.Services;
+using PromptLab.Core.Providers;
 
-namespace PromptLab.Infrastructure.Services;
+namespace PromptLab.Infrastructure.Providers;
 
 /// <summary>
 /// Configuration-based provider service that reads provider configurations 
 /// from appsettings.json and checks real-time availability via ILlmProvider
 /// </summary>
-public class ConfigurationProviderService : IProviderService
+public class ProviderService : IProviderService
 {
     private readonly IConfiguration _configuration;
     private readonly IEnumerable<ILlmProvider> _llmProviders;
-    private readonly ILogger<ConfigurationProviderService> _logger;
+    private readonly ILogger<ProviderService> _logger;
 
-    public ConfigurationProviderService(
+    public ProviderService(
         IConfiguration configuration,
         IEnumerable<ILlmProvider> llmProviders,
-        ILogger<ConfigurationProviderService> logger)
+        ILogger<ProviderService> logger)
     {
         _configuration = configuration ?? throw new ArgumentNullException(nameof(configuration));
         _llmProviders = llmProviders ?? throw new ArgumentNullException(nameof(llmProviders));

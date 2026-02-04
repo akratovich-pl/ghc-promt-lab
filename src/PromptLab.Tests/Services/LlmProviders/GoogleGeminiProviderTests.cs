@@ -7,10 +7,10 @@ using Moq;
 using Moq.Protected;
 using PromptLab.Core.DTOs;
 using PromptLab.Infrastructure.Configuration;
-using PromptLab.Infrastructure.Services.LlmProviders;
-using PromptLab.Infrastructure.Services.LlmProviders.Models;
+using PromptLab.Infrastructure.Providers;
+using PromptLab.Infrastructure.Providers.Models;
 
-namespace PromptLab.Tests.Services.LlmProviders;
+namespace PromptLab.Tests.Providers;
 
 public class GoogleGeminiProviderTests
 {

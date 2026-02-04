@@ -1,9 +1,9 @@
 using PromptLab.Core.DTOs;
 
-namespace PromptLab.Core.Services.Interfaces;
+namespace PromptLab.Core.Services;
 
 /// <summary>
-/// Service for executing prompts against LLM providers
+/// Application service for executing prompts against LLM providers
 /// </summary>
 public interface IPromptExecutionService
 {

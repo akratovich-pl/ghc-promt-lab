@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PromptLab.Infrastructure.Services.LlmProviders.Models;
+namespace PromptLab.Infrastructure.Providers.Models;
 
 /// <summary>
 /// Response model from Google Gemini generateContent endpoint

@@ -1,6 +1,6 @@
 using PromptLab.Core.Domain.Enums;
 
-namespace PromptLab.Core.Services.Interfaces;
+namespace PromptLab.Core.Providers;
 
 /// <summary>
 /// Defines the contract for retrieving LLM provider configuration.

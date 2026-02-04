@@ -1,6 +1,6 @@
 using System.Text.Json.Serialization;
 
-namespace PromptLab.Infrastructure.Services.LlmProviders.Models;
+namespace PromptLab.Infrastructure.Providers.Models;
 
 /// <summary>
 /// Request model for Google Gemini countTokens endpoint

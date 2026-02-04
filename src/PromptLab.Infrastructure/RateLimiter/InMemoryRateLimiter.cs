@@ -2,20 +2,20 @@ using System.Collections.Concurrent;
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using PromptLab.Core.Configuration;
-using PromptLab.Core.Services.Interfaces;
+using PromptLab.Core.RateLimiter;
 
-namespace PromptLab.Infrastructure.Services;
+namespace PromptLab.Infrastructure.RateLimiter;
 
 /// <summary>
 /// In-memory implementation of rate limiting using sliding window algorithm
 /// </summary>
-public class InMemoryRateLimitService : IRateLimitService
+public class InMemoryRateLimiter : IRateLimiter
 {
     private readonly IMemoryCache _cache;
     private readonly RateLimitingOptions _options;
     private readonly ConcurrentDictionary<string, SemaphoreSlim> _locks = new();
 
-    public InMemoryRateLimitService(IMemoryCache cache, IOptions<RateLimitingOptions> options)
+    public InMemoryRateLimiter(IMemoryCache cache, IOptions<RateLimitingOptions> options)
     {
         _cache = cache ?? throw new ArgumentNullException(nameof(cache));
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
