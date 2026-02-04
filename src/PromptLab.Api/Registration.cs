@@ -119,6 +119,9 @@ public static class Registration
 
         // Register pipeline services (Request preparation)
         builder.Services.AddScoped<IRequestPreparationService, RequestPreparationService>();
+        
+        // Register pipeline services (LLM execution)
+        builder.Services.AddScoped<ILlmExecutionService, LlmExecutionService>();
 
         // Register domain services (Business logic)
         builder.Services.AddScoped<IConversationHistoryService, ConversationHistoryService>();
