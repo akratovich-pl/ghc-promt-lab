@@ -6,7 +6,6 @@ using PromptLab.Core.Repositories;
 using PromptLab.Core.Services;
 using PromptLab.Core.Validators;
 using PromptLab.Core.Providers;
-using PromptLab.Core.RateLimiter;
 using System.Diagnostics;
 
 namespace PromptLab.Infrastructure.Services;
@@ -15,11 +14,11 @@ namespace PromptLab.Infrastructure.Services;
 /// Application service for orchestrating prompt execution with LLM providers.
 /// Coordinates validation, conversation management, prompt enrichment,
 /// LLM interaction, and persistence through specialized components.
+/// Rate limiting is handled at the middleware layer.
 /// </summary>
 public class PromptExecutionService : IPromptExecutionService
 {
     private readonly ILlmProvider _llmProvider;
-    private readonly IRateLimiter _rateLimiter;
     private readonly IPromptValidator _promptValidator;
     private readonly IConversationHistoryService _conversationHistoryService;
     private readonly IPromptEnricher _promptEnricher;
@@ -29,7 +28,6 @@ public class PromptExecutionService : IPromptExecutionService
 
     public PromptExecutionService(
         ILlmProvider llmProvider,
-        IRateLimiter rateLimiter,
         IPromptValidator promptValidator,
         IConversationHistoryService conversationHistoryService,
         IPromptEnricher promptEnricher,
@@ -38,7 +36,6 @@ public class PromptExecutionService : IPromptExecutionService
         ILogger<PromptExecutionService> logger)
     {
         _llmProvider = llmProvider ?? throw new ArgumentNullException(nameof(llmProvider));
-        _rateLimiter = rateLimiter ?? throw new ArgumentNullException(nameof(rateLimiter));
         _promptValidator = promptValidator ?? throw new ArgumentNullException(nameof(promptValidator));
         _conversationHistoryService = conversationHistoryService ?? throw new ArgumentNullException(nameof(conversationHistoryService));
         _promptEnricher = promptEnricher ?? throw new ArgumentNullException(nameof(promptEnricher));
@@ -68,16 +65,7 @@ public class PromptExecutionService : IPromptExecutionService
         // 1. Validate input
         _promptValidator.ValidatePromptRequest(prompt, contextFileIds);
 
-        // 2. Check rate limits
-        var isAllowed = await _rateLimiter.CheckRateLimitAsync(userId, cancellationToken);
-        if (!isAllowed)
-        {
-            _logger.LogWarning("Rate limit exceeded. CorrelationId: {CorrelationId}, UserId: {UserId}",
-                correlationId, userId);
-            throw new InvalidOperationException("Rate limit exceeded");
-        }
-
-        // 3. Load conversation history if provided
+        // 2. Load conversation history if provided
         var conversationHistory = conversationId.HasValue
             ? await _conversationHistoryService.LoadConversationHistoryAsync(conversationId.Value, cancellationToken)
             : new List<ConversationMessage>();
@@ -85,11 +73,11 @@ public class PromptExecutionService : IPromptExecutionService
         _logger.LogInformation("Loaded {Count} previous messages. CorrelationId: {CorrelationId}",
             conversationHistory.Count, correlationId);
 
-        // 4. Enrich prompt with context files
+        // 3. Enrich prompt with context files
         var (enrichedPrompt, contextFileId) = await _promptEnricher.EnrichPromptWithContextAsync(
             prompt, contextFileIds, cancellationToken);
 
-        // 5. Build LLM request
+        // 4. Build LLM request
         var llmRequest = _llmRequestBuilder.BuildRequest(
             enrichedPrompt,
             systemPrompt,
@@ -98,7 +86,7 @@ public class PromptExecutionService : IPromptExecutionService
             maxTokens,
             temperature);
 
-        // 6. Call LLM provider
+        // 5. Call LLM provider
         _logger.LogInformation("Calling LLM provider with model {Model}. CorrelationId: {CorrelationId}",
             requestModel, correlationId);
 
@@ -106,11 +94,11 @@ public class PromptExecutionService : IPromptExecutionService
 
         stopwatch.Stop();
 
-        // 7. Ensure conversation exists
+        // 6. Ensure conversation exists
         var actualConversationId = await _conversationHistoryService.EnsureConversationAsync(
             conversationId, userId, prompt, cancellationToken);
 
-        // 8. Save to database
+        // 7. Save to database
         var (promptId, responseId) = await _promptRepository.SavePromptExecutionAsync(
             actualConversationId,
             prompt,
@@ -120,12 +108,9 @@ public class PromptExecutionService : IPromptExecutionService
             (int)stopwatch.ElapsedMilliseconds,
             cancellationToken);
 
-        // 9. Update conversation timestamp
+        // 8. Update conversation timestamp
         await _conversationHistoryService.UpdateConversationTimestampAsync(
             actualConversationId, cancellationToken);
-
-        // 10. Record rate limit usage
-        await _rateLimiter.RecordRequestAsync(userId, cancellationToken);
 
         _logger.LogInformation("Prompt execution completed successfully. CorrelationId: {CorrelationId}, " +
             "PromptId: {PromptId}, ResponseId: {ResponseId}, Tokens: {Tokens}, Cost: {Cost}, Latency: {Latency}ms",

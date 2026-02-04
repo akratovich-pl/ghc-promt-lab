@@ -119,6 +119,8 @@ public static class Registration
 
         // Register domain services (Business logic)
         builder.Services.AddScoped<IConversationHistoryService, ConversationHistoryService>();
+        
+        // Register rate limiting (Used by middleware)
         builder.Services.AddScoped<IRateLimiter, InMemoryRateLimiter>();
 
         // Register repositories (Data access)

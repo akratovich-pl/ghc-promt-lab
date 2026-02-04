@@ -1,5 +1,6 @@
 using Serilog;
 using PromptLab.Api;
+using PromptLab.Api.Extensions;
 using DotNetEnv;
 using PromptLab.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
@@ -92,6 +93,10 @@ try
 
     app.UseHttpsRedirection();
     app.UseCors();
+    
+    // Apply rate limiting middleware before authorization
+    app.UseRateLimiting();
+    
     app.UseAuthorization();
     app.MapControllers();
 
