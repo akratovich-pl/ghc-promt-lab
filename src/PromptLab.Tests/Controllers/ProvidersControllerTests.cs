@@ -4,7 +4,7 @@ using Moq;
 using PromptLab.Api.Controllers;
 using PromptLab.Api.Models;
 using PromptLab.Core.DTOs;
-using PromptLab.Core.Services.Interfaces;
+using PromptLab.Core.Services;
 using PromptLab.Core.Domain.Enums;
 
 namespace PromptLab.Tests.Controllers;

@@ -1,6 +1,6 @@
 using Microsoft.Extensions.Options;
 using PromptLab.Core.Configuration;
-using PromptLab.Core.Services.Interfaces;
+using PromptLab.Core.RateLimiter;
 
 namespace PromptLab.Api.Middleware;
 
@@ -23,7 +23,7 @@ public class RateLimitMiddleware
         _options = options?.Value ?? throw new ArgumentNullException(nameof(options));
     }
 
-    public async Task InvokeAsync(HttpContext context, IRateLimitService rateLimitService)
+    public async Task InvokeAsync(HttpContext context, IRateLimiter rateLimiter)
     {
         // Skip rate limiting if disabled
         if (!_options.Enabled)
@@ -43,8 +43,8 @@ public class RateLimitMiddleware
         var clientKey = GetClientKey(context);
 
         // Check rate limit
-        var isAllowed = await rateLimitService.CheckRateLimitAsync(clientKey, context.RequestAborted);
-        var remaining = await rateLimitService.GetRemainingRequestsAsync(clientKey, context.RequestAborted);
+        var isAllowed = await rateLimiter.CheckRateLimitAsync(clientKey, context.RequestAborted);
+        var remaining = await rateLimiter.GetRemainingRequestsAsync(clientKey, context.RequestAborted);
 
         // Add rate limit headers
         context.Response.Headers.Append("X-RateLimit-Limit-Minute", _options.RequestsPerMinute.ToString());
@@ -74,7 +74,7 @@ public class RateLimitMiddleware
         }
 
         // Record the request
-        await rateLimitService.RecordRequestAsync(clientKey, context.RequestAborted);
+        await rateLimiter.RecordRequestAsync(clientKey, context.RequestAborted);
 
         await _next(context);
     }

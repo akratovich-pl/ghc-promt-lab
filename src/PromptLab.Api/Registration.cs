@@ -1,12 +1,21 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
 using PromptLab.Api.Services;
-using PromptLab.Core.Services.Interfaces;
+using PromptLab.Core.Builders;
+using PromptLab.Core.Repositories;
+using PromptLab.Core.Services;
+using PromptLab.Core.Providers;
+using PromptLab.Core.RateLimiter;
 using PromptLab.Core.Configuration;
+using PromptLab.Core.Validators;
+using PromptLab.Infrastructure.Builders;
 using PromptLab.Infrastructure.Configuration;
 using PromptLab.Infrastructure.Data;
+using PromptLab.Infrastructure.Repositories;
 using PromptLab.Infrastructure.Services;
-using PromptLab.Infrastructure.Services.LlmProviders;
+using PromptLab.Infrastructure.Providers;
+using PromptLab.Infrastructure.RateLimiter;
+using PromptLab.Infrastructure.Validators;
 using System.Reflection;
 
 namespace PromptLab.Api;
@@ -100,16 +109,27 @@ public static class Registration
         }
         builder.Services.AddSingleton(groqConfig);
 
-        // Register LLM providers
+        // Register LLM providers (Infrastructure)
         builder.Services.AddSingleton<ILlmProvider, GoogleGeminiProvider>();
         builder.Services.AddSingleton<ILlmProvider, GroqProvider>();
 
-        // Register application services
-        builder.Services.AddScoped<IProviderService, ConfigurationProviderService>();
+        // Register application services (Orchestrators)
+        builder.Services.AddScoped<IProviderService, ProviderService>();
         builder.Services.AddScoped<IPromptExecutionService, PromptExecutionService>();
 
-        // Register rate limiting service
-        builder.Services.AddScoped<IRateLimitService, InMemoryRateLimitService>();
+        // Register domain services (Business logic)
+        builder.Services.AddScoped<IConversationHistoryService, ConversationHistoryService>();
+        builder.Services.AddScoped<IRateLimiter, InMemoryRateLimiter>();
+
+        // Register repositories (Data access)
+        builder.Services.AddScoped<IPromptRepository, PromptRepository>();
+
+        // Register validators (Cross-cutting concerns)
+        builder.Services.AddScoped<IPromptValidator, PromptValidator>();
+
+        // Register builders (Helpers/Factories)
+        builder.Services.AddScoped<ILlmRequestBuilder, LlmRequestBuilder>();
+        builder.Services.AddScoped<IPromptEnricher, PromptEnricher>();
 
         // Add CORS
         builder.Services.AddCors(options =>

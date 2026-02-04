@@ -1,11 +1,11 @@
 using PromptLab.Core.Domain.Enums;
 using PromptLab.Core.DTOs;
 
-namespace PromptLab.Core.Services.Interfaces;
+namespace PromptLab.Core.Providers;
 
 /// <summary>
 /// Defines the contract for LLM provider implementations.
-/// Providers implement this interface to integrate with different LLM APIs (Google Gemini, OpenAI, etc.).
+/// Providers implement this interface to integrate with different LLM APIs (Google Gemini, OpenAI, Groq, etc.).
 /// </summary>
 public interface ILlmProvider
 {

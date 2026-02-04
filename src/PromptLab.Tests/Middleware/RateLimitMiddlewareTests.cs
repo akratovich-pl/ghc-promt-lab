@@ -4,19 +4,19 @@ using Microsoft.Extensions.Options;
 using Moq;
 using PromptLab.Api.Middleware;
 using PromptLab.Core.Configuration;
-using PromptLab.Core.Services.Interfaces;
+using PromptLab.Core.RateLimiter;
 
 namespace PromptLab.Tests.Middleware;
 
 public class RateLimitMiddlewareTests
 {
-    private readonly Mock<IRateLimitService> _rateLimitService;
+    private readonly Mock<IRateLimiter> _rateLimiter;
     private readonly Mock<ILogger<RateLimitMiddleware>> _logger;
     private readonly RateLimitingOptions _options;
 
     public RateLimitMiddlewareTests()
     {
-        _rateLimitService = new Mock<IRateLimitService>();
+        _rateLimiter = new Mock<IRateLimiter>();
         _logger = new Mock<ILogger<RateLimitMiddleware>>();
         _options = new RateLimitingOptions
         {
@@ -40,10 +40,10 @@ public class RateLimitMiddlewareTests
         context.Request.Path = "/api/test";
 
         // Act
-        await middleware.InvokeAsync(context, _rateLimitService.Object);
+        await middleware.InvokeAsync(context, _rateLimiter.Object);
 
         // Assert
-        _rateLimitService.Verify(x => x.CheckRateLimitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _rateLimiter.Verify(x => x.CheckRateLimitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
@@ -59,20 +59,20 @@ public class RateLimitMiddlewareTests
         context.Request.Path = "/api/health";
 
         // Act
-        await middleware.InvokeAsync(context, _rateLimitService.Object);
+        await middleware.InvokeAsync(context, _rateLimiter.Object);
 
         // Assert
-        _rateLimitService.Verify(x => x.CheckRateLimitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
-        _rateLimitService.Verify(x => x.RecordRequestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _rateLimiter.Verify(x => x.CheckRateLimitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _rateLimiter.Verify(x => x.RecordRequestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task InvokeAsync_WithinLimit_AddsHeadersAndCallsNext()
     {
         // Arrange
-        _rateLimitService.Setup(x => x.CheckRateLimitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _rateLimiter.Setup(x => x.CheckRateLimitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _rateLimitService.Setup(x => x.GetRemainingRequestsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _rateLimiter.Setup(x => x.GetRemainingRequestsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(50);
 
         var nextCalled = false;
@@ -86,7 +86,7 @@ public class RateLimitMiddlewareTests
         context.Response.Body = new MemoryStream();
 
         // Act
-        await middleware.InvokeAsync(context, _rateLimitService.Object);
+        await middleware.InvokeAsync(context, _rateLimiter.Object);
 
         // Assert
         Assert.True(nextCalled);
@@ -97,16 +97,16 @@ public class RateLimitMiddlewareTests
         Assert.Equal("1000", context.Response.Headers["X-RateLimit-Limit-Hour"].ToString());
         Assert.Equal("50", context.Response.Headers["X-RateLimit-Remaining"].ToString());
 
-        _rateLimitService.Verify(x => x.RecordRequestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
+        _rateLimiter.Verify(x => x.RecordRequestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Once);
     }
 
     [Fact]
     public async Task InvokeAsync_ExceedsLimit_Returns429()
     {
         // Arrange
-        _rateLimitService.Setup(x => x.CheckRateLimitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _rateLimiter.Setup(x => x.CheckRateLimitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(false);
-        _rateLimitService.Setup(x => x.GetRemainingRequestsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _rateLimiter.Setup(x => x.GetRemainingRequestsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(0);
 
         var nextCalled = false;
@@ -120,7 +120,7 @@ public class RateLimitMiddlewareTests
         context.Response.Body = new MemoryStream();
 
         // Act
-        await middleware.InvokeAsync(context, _rateLimitService.Object);
+        await middleware.InvokeAsync(context, _rateLimiter.Object);
 
         // Assert
         Assert.False(nextCalled);
@@ -128,16 +128,16 @@ public class RateLimitMiddlewareTests
         Assert.True(context.Response.Headers.ContainsKey("Retry-After"));
         Assert.Equal("60", context.Response.Headers["Retry-After"].ToString());
 
-        _rateLimitService.Verify(x => x.RecordRequestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
+        _rateLimiter.Verify(x => x.RecordRequestAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()), Times.Never);
     }
 
     [Fact]
     public async Task InvokeAsync_UsesXForwardedForHeader_WhenPresent()
     {
         // Arrange
-        _rateLimitService.Setup(x => x.CheckRateLimitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _rateLimiter.Setup(x => x.CheckRateLimitAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(true);
-        _rateLimitService.Setup(x => x.GetRemainingRequestsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
+        _rateLimiter.Setup(x => x.GetRemainingRequestsAsync(It.IsAny<string>(), It.IsAny<CancellationToken>()))
             .ReturnsAsync(50);
 
         var middleware = new RateLimitMiddleware(
@@ -151,10 +151,10 @@ public class RateLimitMiddlewareTests
         context.Response.Body = new MemoryStream();
 
         // Act
-        await middleware.InvokeAsync(context, _rateLimitService.Object);
+        await middleware.InvokeAsync(context, _rateLimiter.Object);
 
         // Assert
-        _rateLimitService.Verify(x => x.CheckRateLimitAsync("client:192.168.1.1", It.IsAny<CancellationToken>()), Times.Once);
-        _rateLimitService.Verify(x => x.RecordRequestAsync("client:192.168.1.1", It.IsAny<CancellationToken>()), Times.Once);
+        _rateLimiter.Verify(x => x.CheckRateLimitAsync("client:192.168.1.1", It.IsAny<CancellationToken>()), Times.Once);
+        _rateLimiter.Verify(x => x.RecordRequestAsync("client:192.168.1.1", It.IsAny<CancellationToken>()), Times.Once);
     }
 }

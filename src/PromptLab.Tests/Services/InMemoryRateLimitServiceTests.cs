@@ -1,16 +1,16 @@
 using Microsoft.Extensions.Caching.Memory;
 using Microsoft.Extensions.Options;
 using PromptLab.Core.Configuration;
-using PromptLab.Infrastructure.Services;
+using PromptLab.Infrastructure.RateLimiter;
 
-namespace PromptLab.Tests.Services;
+namespace PromptLab.Tests.RateLimiter;
 
-public class InMemoryRateLimitServiceTests
+public class InMemoryRateLimiterTests
 {
     private readonly IMemoryCache _cache;
     private readonly RateLimitingOptions _options;
 
-    public InMemoryRateLimitServiceTests()
+    public InMemoryRateLimiterTests()
     {
         _cache = new MemoryCache(new MemoryCacheOptions());
         _options = new RateLimitingOptions
@@ -26,7 +26,7 @@ public class InMemoryRateLimitServiceTests
     {
         // Arrange
         var disabledOptions = new RateLimitingOptions { Enabled = false };
-        var service = new InMemoryRateLimitService(_cache, Options.Create(disabledOptions));
+        var service = new InMemoryRateLimiter(_cache, Options.Create(disabledOptions));
 
         // Act
         var result = await service.CheckRateLimitAsync("test-key");
@@ -39,7 +39,7 @@ public class InMemoryRateLimitServiceTests
     public async Task CheckRateLimitAsync_WithinLimit_ReturnsTrue()
     {
         // Arrange
-        var service = new InMemoryRateLimitService(_cache, Options.Create(_options));
+        var service = new InMemoryRateLimiter(_cache, Options.Create(_options));
         var key = "test-key";
 
         // Act
@@ -53,7 +53,7 @@ public class InMemoryRateLimitServiceTests
     public async Task RecordRequestAsync_IncreasesRequestCount()
     {
         // Arrange
-        var service = new InMemoryRateLimitService(_cache, Options.Create(_options));
+        var service = new InMemoryRateLimiter(_cache, Options.Create(_options));
         var key = "test-key";
 
         // Act
@@ -68,7 +68,7 @@ public class InMemoryRateLimitServiceTests
     public async Task CheckRateLimitAsync_ExceedsPerMinuteLimit_ReturnsFalse()
     {
         // Arrange
-        var service = new InMemoryRateLimitService(_cache, Options.Create(_options));
+        var service = new InMemoryRateLimiter(_cache, Options.Create(_options));
         var key = "test-key";
 
         // Act - Record 5 requests (at the limit)
@@ -87,7 +87,7 @@ public class InMemoryRateLimitServiceTests
     public async Task GetRemainingRequestsAsync_ReturnsCorrectCount()
     {
         // Arrange
-        var service = new InMemoryRateLimitService(_cache, Options.Create(_options));
+        var service = new InMemoryRateLimiter(_cache, Options.Create(_options));
         var key = "test-key";
 
         // Act
@@ -104,7 +104,7 @@ public class InMemoryRateLimitServiceTests
     {
         // Arrange
         var disabledOptions = new RateLimitingOptions { Enabled = false };
-        var service = new InMemoryRateLimitService(_cache, Options.Create(disabledOptions));
+        var service = new InMemoryRateLimiter(_cache, Options.Create(disabledOptions));
 
         // Act
         var remaining = await service.GetRemainingRequestsAsync("test-key");
@@ -117,7 +117,7 @@ public class InMemoryRateLimitServiceTests
     public async Task RateLimit_UsesMinimumOfBothLimits()
     {
         // Arrange
-        var service = new InMemoryRateLimitService(_cache, Options.Create(_options));
+        var service = new InMemoryRateLimiter(_cache, Options.Create(_options));
         var key = "test-key";
 
         // Act - Record 5 requests (at per-minute limit but under per-hour limit)
@@ -136,7 +136,7 @@ public class InMemoryRateLimitServiceTests
     public async Task RateLimit_ThreadSafe_MultipleRequests()
     {
         // Arrange
-        var service = new InMemoryRateLimitService(_cache, Options.Create(_options));
+        var service = new InMemoryRateLimiter(_cache, Options.Create(_options));
         var key = "test-key";
         var tasks = new List<Task>();
 
@@ -157,7 +157,7 @@ public class InMemoryRateLimitServiceTests
     public async Task DifferentKeys_HaveSeparateLimits()
     {
         // Arrange
-        var service = new InMemoryRateLimitService(_cache, Options.Create(_options));
+        var service = new InMemoryRateLimiter(_cache, Options.Create(_options));
         var key1 = "test-key-1";
         var key2 = "test-key-2";
 

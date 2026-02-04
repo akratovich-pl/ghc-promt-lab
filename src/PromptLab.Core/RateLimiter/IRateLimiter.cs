@@ -1,9 +1,9 @@
-namespace PromptLab.Core.Services.Interfaces;
+namespace PromptLab.Core.RateLimiter;
 
 /// <summary>
 /// Service for rate limiting API requests
 /// </summary>
-public interface IRateLimitService
+public interface IRateLimiter
 {
     /// <summary>
     /// Checks if a request is allowed based on rate limits

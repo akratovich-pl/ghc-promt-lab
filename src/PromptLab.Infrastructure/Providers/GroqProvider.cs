@@ -7,30 +7,30 @@ using Polly;
 using Polly.Retry;
 using PromptLab.Core.Domain.Enums;
 using PromptLab.Core.DTOs;
-using PromptLab.Core.Services.Interfaces;
+using PromptLab.Core.Providers;
 using PromptLab.Infrastructure.Configuration;
-using PromptLab.Infrastructure.Services.LlmProviders.Models;
+using PromptLab.Infrastructure.Providers.Models;
 
-namespace PromptLab.Infrastructure.Services.LlmProviders;
+namespace PromptLab.Infrastructure.Providers;
 
 /// <summary>
-/// Google Gemini API provider implementation
+/// Groq API provider implementation
 /// </summary>
-public class GoogleGeminiProvider : ILlmProvider
+public class GroqProvider : ILlmProvider
 {
-    private readonly GoogleGeminiConfig _config;
+    private readonly GroqConfig _config;
     private readonly IHttpClientFactory _httpClientFactory;
-    private readonly ILogger<GoogleGeminiProvider> _logger;
+    private readonly ILogger<GroqProvider> _logger;
     private readonly AsyncRetryPolicy<HttpResponseMessage> _retryPolicy;
     private readonly JsonSerializerOptions _jsonOptions;
 
-    public string ProviderName => "Google Gemini";
-    public AiProvider Provider => AiProvider.Google;
+    public string ProviderName => "Groq";
+    public AiProvider Provider => AiProvider.Groq;
 
-    public GoogleGeminiProvider(
-        GoogleGeminiConfig config,
+    public GroqProvider(
+        GroqConfig config,
         IHttpClientFactory httpClientFactory,
-        ILogger<GoogleGeminiProvider> logger)
+        ILogger<GroqProvider> logger)
     {
         _config = config ?? throw new ArgumentNullException(nameof(config));
         _httpClientFactory = httpClientFactory ?? throw new ArgumentNullException(nameof(httpClientFactory));
@@ -73,17 +73,23 @@ public class GoogleGeminiProvider : ILlmProvider
         {
             _logger.LogInformation("Generating content with model {Model}", model);
 
-            var geminiRequest = BuildGeminiRequest(request);
+            var groqRequest = BuildGroqRequest(request);
             var httpClient = CreateHttpClient();
-            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/models/{model}:generateContent?key={_config.ApiKey}";
+            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/chat/completions";
 
             var response = await _retryPolicy.ExecuteAsync(async () =>
             {
-                var jsonContent = JsonSerializer.Serialize(geminiRequest, _jsonOptions);
+                var jsonContent = JsonSerializer.Serialize(groqRequest, _jsonOptions);
                 _logger.LogDebug("Request payload: {Payload}", jsonContent);
 
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                return await httpClient.PostAsync(url, content, cancellationToken);
+                var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = content
+                };
+                requestMessage.Headers.Add("Authorization", $"Bearer {_config.ApiKey}");
+                
+                return await httpClient.SendAsync(requestMessage, cancellationToken);
             });
 
             stopwatch.Stop();
@@ -109,11 +115,11 @@ public class GoogleGeminiProvider : ILlmProvider
             var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
             _logger.LogDebug("Response payload: {Payload}", responseJson);
 
-            var geminiResponse = JsonSerializer.Deserialize<GeminiGenerateResponse>(responseJson, _jsonOptions);
+            var groqResponse = JsonSerializer.Deserialize<GroqChatResponse>(responseJson, _jsonOptions);
 
-            if (geminiResponse?.Candidates == null || geminiResponse.Candidates.Count == 0)
+            if (groqResponse?.Choices == null || groqResponse.Choices.Count == 0)
             {
-                _logger.LogWarning("No candidates in response");
+                _logger.LogWarning("No choices in response");
                 return new LlmResponse
                 {
                     Content = string.Empty,
@@ -124,12 +130,12 @@ public class GoogleGeminiProvider : ILlmProvider
                 };
             }
 
-            var candidate = geminiResponse.Candidates[0];
-            var content = candidate.Content?.Parts?.FirstOrDefault()?.Text ?? string.Empty;
-            var usage = geminiResponse.UsageMetadata;
+            var choice = groqResponse.Choices[0];
+            var content = choice.Message?.Content ?? string.Empty;
+            var usage = groqResponse.Usage;
 
-            var promptTokens = usage?.PromptTokenCount ?? 0;
-            var completionTokens = usage?.CandidatesTokenCount ?? 0;
+            var promptTokens = usage?.PromptTokens ?? 0;
+            var completionTokens = usage?.CompletionTokens ?? 0;
             var cost = CalculateCost(promptTokens, completionTokens);
 
             _logger.LogInformation(
@@ -147,7 +153,7 @@ public class GoogleGeminiProvider : ILlmProvider
                 CompletionTokens = completionTokens,
                 Cost = cost,
                 LatencyMs = stopwatch.ElapsedMilliseconds,
-                FinishReason = candidate.FinishReason,
+                FinishReason = choice.FinishReason,
                 Success = true
             };
         }
@@ -195,60 +201,16 @@ public class GoogleGeminiProvider : ILlmProvider
         }
     }
 
-    public async Task<int> EstimateTokensAsync(string prompt, CancellationToken cancellationToken = default)
+    public Task<int> EstimateTokensAsync(string prompt, CancellationToken cancellationToken = default)
     {
         if (string.IsNullOrWhiteSpace(prompt))
             throw new ArgumentException("Prompt cannot be empty", nameof(prompt));
 
-        try
-        {
-            _logger.LogInformation("Estimating tokens for prompt");
-
-            var request = new GeminiCountTokensRequest
-            {
-                Contents = new List<GeminiContent>
-                {
-                    new GeminiContent
-                    {
-                        Parts = new List<GeminiPart>
-                        {
-                            new GeminiPart { Text = prompt }
-                        }
-                    }
-                }
-            };
-
-            var httpClient = CreateHttpClient();
-            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/models/{_config.Model}:countTokens?key={_config.ApiKey}";
-
-            var jsonContent = JsonSerializer.Serialize(request, _jsonOptions);
-            var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-
-            var response = await httpClient.PostAsync(url, content, cancellationToken);
-
-            if (!response.IsSuccessStatusCode)
-            {
-                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
-                _logger.LogError(
-                    "Token estimation failed with status {StatusCode}: {Error}",
-                    response.StatusCode,
-                    errorContent);
-                return 0;
-            }
-
-            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
-            var countResponse = JsonSerializer.Deserialize<GeminiCountTokensResponse>(responseJson, _jsonOptions);
-
-            var tokenCount = countResponse?.TotalTokens ?? 0;
-            _logger.LogInformation("Estimated {TokenCount} tokens", tokenCount);
-
-            return tokenCount;
-        }
-        catch (Exception ex)
-        {
-            _logger.LogError(ex, "Error estimating tokens");
-            return 0;
-        }
+        // Groq doesn't have a token counting endpoint, so we use a simple estimation
+        // Roughly 4 characters per token
+        var estimatedTokens = prompt.Length / 4;
+        _logger.LogInformation("Estimated {TokenCount} tokens for prompt length {Length}", estimatedTokens, prompt.Length);
+        return Task.FromResult(estimatedTokens);
     }
 
     public async Task<bool> IsAvailable()
@@ -261,11 +223,16 @@ public class GoogleGeminiProvider : ILlmProvider
                 return false;
             }
 
-            // Quick availability check with a minimal token estimation request
-            var testPrompt = "test";
-            var tokenCount = await EstimateTokensAsync(testPrompt);
+            // Simple availability check with a minimal request
+            var httpClient = CreateHttpClient();
+            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/models";
             
-            var isAvailable = tokenCount > 0;
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
+            requestMessage.Headers.Add("Authorization", $"Bearer {_config.ApiKey}");
+            
+            var response = await httpClient.SendAsync(requestMessage);
+            
+            var isAvailable = response.IsSuccessStatusCode;
             _logger.LogInformation("Provider availability: {IsAvailable}", isAvailable);
             
             return isAvailable;
@@ -277,49 +244,36 @@ public class GoogleGeminiProvider : ILlmProvider
         }
     }
 
-    private GeminiGenerateRequest BuildGeminiRequest(LlmRequest request)
+    private GroqChatRequest BuildGroqRequest(LlmRequest request)
     {
-        var contents = new List<GeminiContent>();
+        var messages = new List<GroqMessage>();
 
-        // Add system message as a separate content if provided
+        // Add system message if provided
         if (!string.IsNullOrWhiteSpace(request.SystemMessage))
         {
-            contents.Add(new GeminiContent
+            messages.Add(new GroqMessage
             {
-                Parts = new List<GeminiPart>
-                {
-                    new GeminiPart { Text = request.SystemMessage }
-                },
-                Role = "user"
+                Role = "system",
+                Content = request.SystemMessage
             });
         }
 
-        // Add main prompt
-        contents.Add(new GeminiContent
+        // Add user prompt
+        messages.Add(new GroqMessage
         {
-            Parts = new List<GeminiPart>
-            {
-                new GeminiPart { Text = request.Prompt }
-            },
-            Role = "user"
+            Role = "user",
+            Content = request.Prompt
         });
 
-        var geminiRequest = new GeminiGenerateRequest
+        var groqRequest = new GroqChatRequest
         {
-            Contents = contents
+            Model = request.Model ?? _config.Model,
+            Messages = messages,
+            Temperature = request.Temperature.HasValue ? (double?)request.Temperature.Value : null,
+            MaxTokens = request.MaxTokens
         };
 
-        // Add generation config if any parameters are specified
-        if (request.Temperature.HasValue || request.MaxTokens.HasValue)
-        {
-            geminiRequest.GenerationConfig = new GeminiGenerationConfig
-            {
-                Temperature = request.Temperature.HasValue ? (double?)request.Temperature.Value : null,
-                MaxOutputTokens = request.MaxTokens
-            };
-        }
-
-        return geminiRequest;
+        return groqRequest;
     }
 
     private HttpClient CreateHttpClient()
