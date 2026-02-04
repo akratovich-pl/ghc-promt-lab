@@ -17,7 +17,7 @@ public class PromptExecutionService : IPromptExecutionService
 {
     private readonly ILlmExecutionService _llmExecutionService;
     private readonly IRequestPreparationService _requestPreparationService;
-    private readonly IConversationHistoryService _conversationHistoryService;
+    private readonly IPromptPersistenceService _promptPersistenceService;
     private readonly IPromptRepository _promptRepository;
     private readonly IEnumerable<ILlmProvider> _llmProviders;
     private readonly ILogger<PromptExecutionService> _logger;
@@ -25,14 +25,14 @@ public class PromptExecutionService : IPromptExecutionService
     public PromptExecutionService(
         ILlmExecutionService llmExecutionService,
         IRequestPreparationService requestPreparationService,
-        IConversationHistoryService conversationHistoryService,
+        IPromptPersistenceService promptPersistenceService,
         IPromptRepository promptRepository,
         IEnumerable<ILlmProvider> llmProviders,
         ILogger<PromptExecutionService> logger)
     {
         _llmExecutionService = llmExecutionService ?? throw new ArgumentNullException(nameof(llmExecutionService));
         _requestPreparationService = requestPreparationService ?? throw new ArgumentNullException(nameof(requestPreparationService));
-        _conversationHistoryService = conversationHistoryService ?? throw new ArgumentNullException(nameof(conversationHistoryService));
+        _promptPersistenceService = promptPersistenceService ?? throw new ArgumentNullException(nameof(promptPersistenceService));
         _promptRepository = promptRepository ?? throw new ArgumentNullException(nameof(promptRepository));
         _llmProviders = llmProviders ?? throw new ArgumentNullException(nameof(llmProviders));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
@@ -64,36 +64,26 @@ public class PromptExecutionService : IPromptExecutionService
         var executionResult = await _llmExecutionService.ExecuteAsync(
             preparedRequest, correlationId.ToString(), cancellationToken);
 
-        var llmResponse = executionResult.Response;
         stopwatch.Stop();
 
-        // 6. Ensure conversation exists
-        var actualConversationId = await _conversationHistoryService.EnsureConversationAsync(
-            conversationId, userId, prompt, cancellationToken);
-
-        // 7. Save to database
-        var (promptId, responseId) = await _promptRepository.SavePromptExecutionAsync(
-            actualConversationId,
-            prompt,
-            systemPrompt,
-            preparedRequest.ContextFileId,
-            llmResponse,
-            (int)stopwatch.ElapsedMilliseconds,
+        // 6-8. Persist results (conversation management + database save)
+        var persistenceResult = await _promptPersistenceService.PersistAsync(
+            prompt, systemPrompt, conversationId, executionResult, 
+            correlationId.ToString(), userId, (int)stopwatch.ElapsedMilliseconds, 
             cancellationToken);
 
-        // 8. Update conversation timestamp
-        await _conversationHistoryService.UpdateConversationTimestampAsync(
-            actualConversationId, cancellationToken);
+        var llmResponse = executionResult.Response;
 
         _logger.LogInformation("Prompt execution completed successfully. CorrelationId: {CorrelationId}, " +
             "PromptId: {PromptId}, ResponseId: {ResponseId}, Tokens: {Tokens}, Cost: {Cost}, Latency: {Latency}ms",
-            correlationId, promptId, responseId, llmResponse.PromptTokens + llmResponse.CompletionTokens, 
+            correlationId, persistenceResult.PromptId, persistenceResult.ResponseId, 
+            llmResponse.PromptTokens + llmResponse.CompletionTokens, 
             llmResponse.Cost, stopwatch.ElapsedMilliseconds);
 
         return new PromptExecutionResult
         {
-            PromptId = promptId,
-            ResponseId = responseId,
+            PromptId = persistenceResult.PromptId,
+            ResponseId = persistenceResult.ResponseId,
             Content = llmResponse.Content,
             InputTokens = llmResponse.PromptTokens,
             OutputTokens = llmResponse.CompletionTokens,
@@ -101,7 +91,7 @@ public class PromptExecutionService : IPromptExecutionService
             LatencyMs = (int)stopwatch.ElapsedMilliseconds,
             Model = llmResponse.Model,
             Provider = executionResult.Provider,
-            CreatedAt = DateTime.UtcNow
+            CreatedAt = persistenceResult.CreatedAt
         };
     }
 
