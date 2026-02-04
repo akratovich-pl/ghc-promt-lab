@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using Microsoft.OpenApi.Models;
+using PromptLab.Api.Filters;
 using PromptLab.Api.Services;
 using PromptLab.Core.Builders;
 using PromptLab.Core.Repositories;
@@ -32,7 +33,11 @@ public static class Registration
     {
         // Add core services
         builder.Services.AddSingleton<IStartupTimeService, StartupTimeService>();
-        builder.Services.AddControllers();
+        builder.Services.AddControllers(options =>
+        {
+            // Register global exception filter
+            options.Filters.Add<GlobalExceptionFilter>();
+        });
         builder.Services.AddEndpointsApiExplorer();
         
         // Configure Swagger

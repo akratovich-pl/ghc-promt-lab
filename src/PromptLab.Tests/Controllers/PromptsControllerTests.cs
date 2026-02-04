@@ -73,7 +73,7 @@ public class PromptsControllerTests
     }
 
     [Fact]
-    public async Task ExecutePrompt_ServiceThrowsArgumentException_ReturnsBadRequest()
+    public async Task ExecutePrompt_ServiceThrowsArgumentException_ThrowsException()
     {
         // Arrange
         var request = new ExecutePromptRequest { Prompt = "Test" };
@@ -90,14 +90,10 @@ public class PromptsControllerTests
                 It.IsAny<CancellationToken>()))
             .ThrowsAsync(new ArgumentException("Invalid prompt"));
 
-        // Act
-        var result = await _controller.ExecutePrompt(request, CancellationToken.None);
-
-        // Assert
-        var actionResult = Assert.IsType<ActionResult<ExecutePromptResponse>>(result);
-        var badRequestResult = Assert.IsType<BadRequestObjectResult>(actionResult.Result);
-        var problemDetails = Assert.IsType<ProblemDetails>(badRequestResult.Value);
-        Assert.Equal(400, problemDetails.Status);
+        // Act & Assert
+        // Exception is now handled by GlobalExceptionFilter, not in controller
+        await Assert.ThrowsAsync<ArgumentException>(
+            () => _controller.ExecutePrompt(request, CancellationToken.None));
     }
 
     [Fact]
