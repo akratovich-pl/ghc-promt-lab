@@ -15,23 +15,26 @@ namespace PromptLab.Infrastructure.Services;
 /// </summary>
 public class PromptExecutionService : IPromptExecutionService
 {
-    private readonly ILlmProvider _llmProvider;
+    private readonly ILlmExecutionService _llmExecutionService;
     private readonly IRequestPreparationService _requestPreparationService;
     private readonly IConversationHistoryService _conversationHistoryService;
     private readonly IPromptRepository _promptRepository;
+    private readonly IEnumerable<ILlmProvider> _llmProviders;
     private readonly ILogger<PromptExecutionService> _logger;
 
     public PromptExecutionService(
-        ILlmProvider llmProvider,
+        ILlmExecutionService llmExecutionService,
         IRequestPreparationService requestPreparationService,
         IConversationHistoryService conversationHistoryService,
         IPromptRepository promptRepository,
+        IEnumerable<ILlmProvider> llmProviders,
         ILogger<PromptExecutionService> logger)
     {
-        _llmProvider = llmProvider ?? throw new ArgumentNullException(nameof(llmProvider));
+        _llmExecutionService = llmExecutionService ?? throw new ArgumentNullException(nameof(llmExecutionService));
         _requestPreparationService = requestPreparationService ?? throw new ArgumentNullException(nameof(requestPreparationService));
         _conversationHistoryService = conversationHistoryService ?? throw new ArgumentNullException(nameof(conversationHistoryService));
         _promptRepository = promptRepository ?? throw new ArgumentNullException(nameof(promptRepository));
+        _llmProviders = llmProviders ?? throw new ArgumentNullException(nameof(llmProviders));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -57,12 +60,11 @@ public class PromptExecutionService : IPromptExecutionService
             prompt, systemPrompt, conversationId, contextFileIds, 
             model, maxTokens, temperature, userId, cancellationToken);
 
-        // 5. Call LLM provider
-        _logger.LogInformation("Calling LLM provider with model {Model}. CorrelationId: {CorrelationId}",
-            preparedRequest.Model, correlationId);
+        // 5. Execute LLM request
+        var executionResult = await _llmExecutionService.ExecuteAsync(
+            preparedRequest, correlationId.ToString(), cancellationToken);
 
-        var llmResponse = await _llmProvider.GenerateAsync(preparedRequest.LlmRequest, cancellationToken);
-
+        var llmResponse = executionResult.Response;
         stopwatch.Stop();
 
         // 6. Ensure conversation exists
@@ -98,7 +100,7 @@ public class PromptExecutionService : IPromptExecutionService
             Cost = llmResponse.Cost,
             LatencyMs = (int)stopwatch.ElapsedMilliseconds,
             Model = llmResponse.Model,
-            Provider = AiProvider.Google,
+            Provider = executionResult.Provider,
             CreatedAt = DateTime.UtcNow
         };
     }
@@ -110,7 +112,14 @@ public class PromptExecutionService : IPromptExecutionService
     {
         try
         {
-            var tokenCount = await _llmProvider.EstimateTokensAsync(prompt, cancellationToken);
+            // Select provider for token estimation (uses first available provider)
+            var provider = _llmProviders.FirstOrDefault();
+            if (provider == null)
+            {
+                throw new InvalidOperationException("No LLM providers available for token estimation");
+            }
+
+            var tokenCount = await provider.EstimateTokensAsync(prompt, cancellationToken);
             // Simple cost estimation - this should ideally come from configuration
             var estimatedCost = tokenCount * 0.00001m; // Rough estimate
 
