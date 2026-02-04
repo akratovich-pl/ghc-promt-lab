@@ -1,7 +1,35 @@
 using Serilog;
 using PromptLab.Api;
+using DotNetEnv;
 using PromptLab.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
+
+// Load environment variables from .env file if it exists
+// Try multiple potential paths for .env file
+var envPaths = new[]
+{
+    Path.Combine(Directory.GetCurrentDirectory(), ".env"),
+    Path.Combine(Directory.GetCurrentDirectory(), "..", "..", ".env"),
+    Path.Combine(AppContext.BaseDirectory, ".env"),
+    Path.Combine(AppContext.BaseDirectory, "..", "..", "..", "..", "..", ".env")
+};
+
+var envLoaded = false;
+foreach (var envPath in envPaths)
+{
+    if (File.Exists(envPath))
+    {
+        Env.Load(envPath);
+        envLoaded = true;
+        break;
+    }
+}
+
+// If .env not found, that's okay - we'll use environment variables directly
+if (!envLoaded)
+{
+    // In test/production environments, environment variables may be set directly
+}
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()

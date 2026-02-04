@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Mvc.Testing;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.DependencyInjection.Extensions;
+using Microsoft.Extensions.Hosting;
 using PromptLab.Infrastructure.Data;
 
 namespace PromptLab.Tests.Integration;
@@ -32,17 +33,22 @@ public class CustomWebApplicationFactory : WebApplicationFactory<Program>
             });
         });
 
-        // Initialize database after the host is built
-        builder.ConfigureServices(services =>
+        builder.UseEnvironment("Testing");
+    }
+
+    protected override IHost CreateHost(IHostBuilder builder)
+    {
+        var host = base.CreateHost(builder);
+
+        // Initialize database after the host is created
+        using (var scope = host.Services.CreateScope())
         {
-            var sp = services.BuildServiceProvider();
-            using var scope = sp.CreateScope();
             var scopedServices = scope.ServiceProvider;
             var db = scopedServices.GetRequiredService<ApplicationDbContext>();
             db.Database.EnsureDeleted();
             db.Database.EnsureCreated();
-        });
+        }
 
-        builder.UseEnvironment("Testing");
+        return host;
     }
 }

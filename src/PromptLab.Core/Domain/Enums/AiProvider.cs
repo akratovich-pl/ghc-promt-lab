@@ -8,5 +8,6 @@ public enum AiProvider
     OpenAI,
     Anthropic,
     Google,
+    Groq,
     Other
 }
