@@ -1,10 +1,8 @@
 using Microsoft.Extensions.Logging;
-using PromptLab.Core.Builders;
 using PromptLab.Core.Domain.Enums;
 using PromptLab.Core.DTOs;
 using PromptLab.Core.Repositories;
 using PromptLab.Core.Services;
-using PromptLab.Core.Validators;
 using PromptLab.Core.Providers;
 using System.Diagnostics;
 
@@ -12,35 +10,28 @@ namespace PromptLab.Infrastructure.Services;
 
 /// <summary>
 /// Application service for orchestrating prompt execution with LLM providers.
-/// Coordinates validation, conversation management, prompt enrichment,
-/// LLM interaction, and persistence through specialized components.
+/// Coordinates request preparation, LLM interaction, and persistence through specialized components.
 /// Rate limiting is handled at the middleware layer.
 /// </summary>
 public class PromptExecutionService : IPromptExecutionService
 {
     private readonly ILlmProvider _llmProvider;
-    private readonly IPromptValidator _promptValidator;
+    private readonly IRequestPreparationService _requestPreparationService;
     private readonly IConversationHistoryService _conversationHistoryService;
-    private readonly IPromptEnricher _promptEnricher;
     private readonly IPromptRepository _promptRepository;
-    private readonly ILlmRequestBuilder _llmRequestBuilder;
     private readonly ILogger<PromptExecutionService> _logger;
 
     public PromptExecutionService(
         ILlmProvider llmProvider,
-        IPromptValidator promptValidator,
+        IRequestPreparationService requestPreparationService,
         IConversationHistoryService conversationHistoryService,
-        IPromptEnricher promptEnricher,
         IPromptRepository promptRepository,
-        ILlmRequestBuilder llmRequestBuilder,
         ILogger<PromptExecutionService> logger)
     {
         _llmProvider = llmProvider ?? throw new ArgumentNullException(nameof(llmProvider));
-        _promptValidator = promptValidator ?? throw new ArgumentNullException(nameof(promptValidator));
+        _requestPreparationService = requestPreparationService ?? throw new ArgumentNullException(nameof(requestPreparationService));
         _conversationHistoryService = conversationHistoryService ?? throw new ArgumentNullException(nameof(conversationHistoryService));
-        _promptEnricher = promptEnricher ?? throw new ArgumentNullException(nameof(promptEnricher));
         _promptRepository = promptRepository ?? throw new ArgumentNullException(nameof(promptRepository));
-        _llmRequestBuilder = llmRequestBuilder ?? throw new ArgumentNullException(nameof(llmRequestBuilder));
         _logger = logger ?? throw new ArgumentNullException(nameof(logger));
     }
 
@@ -57,40 +48,20 @@ public class PromptExecutionService : IPromptExecutionService
         var correlationId = Guid.NewGuid();
         var stopwatch = Stopwatch.StartNew();
         var userId = "system"; // TODO: Get from auth context
-        var requestModel = model ?? "gemini-1.5-flash";
 
         _logger.LogInformation("Starting prompt execution. CorrelationId: {CorrelationId}, UserId: {UserId}",
             correlationId, userId);
 
-        // 1. Validate input
-        _promptValidator.ValidatePromptRequest(prompt, contextFileIds);
-
-        // 2. Load conversation history if provided
-        var conversationHistory = conversationId.HasValue
-            ? await _conversationHistoryService.LoadConversationHistoryAsync(conversationId.Value, cancellationToken)
-            : new List<ConversationMessage>();
-
-        _logger.LogInformation("Loaded {Count} previous messages. CorrelationId: {CorrelationId}",
-            conversationHistory.Count, correlationId);
-
-        // 3. Enrich prompt with context files
-        var (enrichedPrompt, contextFileId) = await _promptEnricher.EnrichPromptWithContextAsync(
-            prompt, contextFileIds, cancellationToken);
-
-        // 4. Build LLM request
-        var llmRequest = _llmRequestBuilder.BuildRequest(
-            enrichedPrompt,
-            systemPrompt,
-            requestModel,
-            conversationHistory,
-            maxTokens,
-            temperature);
+        // 1-4. Prepare request (validation, history, enrichment, building)
+        var preparedRequest = await _requestPreparationService.PrepareAsync(
+            prompt, systemPrompt, conversationId, contextFileIds, 
+            model, maxTokens, temperature, userId, cancellationToken);
 
         // 5. Call LLM provider
         _logger.LogInformation("Calling LLM provider with model {Model}. CorrelationId: {CorrelationId}",
-            requestModel, correlationId);
+            preparedRequest.Model, correlationId);
 
-        var llmResponse = await _llmProvider.GenerateAsync(llmRequest, cancellationToken);
+        var llmResponse = await _llmProvider.GenerateAsync(preparedRequest.LlmRequest, cancellationToken);
 
         stopwatch.Stop();
 
@@ -103,7 +74,7 @@ public class PromptExecutionService : IPromptExecutionService
             actualConversationId,
             prompt,
             systemPrompt,
-            contextFileId,
+            preparedRequest.ContextFileId,
             llmResponse,
             (int)stopwatch.ElapsedMilliseconds,
             cancellationToken);
