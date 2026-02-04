@@ -85,10 +85,7 @@ public class GlobalExceptionFilter : IExceptionFilter
         };
 
         // Add correlation ID if available from HTTP context
-        if (context.HttpContext.TraceIdentifier != null)
-        {
-            problemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
-        }
+        problemDetails.Extensions["traceId"] = context.HttpContext.TraceIdentifier;
 
         // For 4xx errors, include detailed exception messages (client-actionable)
         // For 5xx errors in Development, include details; in Production, sanitize
