@@ -165,6 +165,8 @@ import { gsap } from 'gsap'
 import { useLlmStore } from '@/stores/llmStore'
 import { usePromptStore } from '@/stores/promptStore'
 import { useMetricsStore } from '@/stores/metricsStore'
+import { mapProviderNameToEnum } from '@/utils/providerMapper'
+import * as apiService from '@/services/api'
 import type { PromptExecution } from '@/stores/promptStore'
 
 // Constants
@@ -203,11 +205,64 @@ function changeModel() {
 }
 
 async function executePrompt() {
-  if (!promptStore.currentPrompt.trim()) return
+  if (!promptStore.currentPrompt.trim() || !llmStore.selectedModel) return
 
   promptStore.setExecuting(true)
+  const startTime = Date.now()
   
-  // Simulate prompt execution (replace with actual API call)
+  try {
+    // Map provider name to enum
+    const providerEnum = mapProviderNameToEnum(llmStore.selectedModel.providerName)
+    
+    // Execute real API call
+    const response = await apiService.executePrompt({
+      provider: providerEnum,
+      prompt: promptStore.currentPrompt,
+      model: llmStore.selectedModel.modelName
+    })
+    
+    const executionTime = Date.now() - startTime
+    
+    // Update stores with real data
+    promptStore.setResponse(response.data.content)
+    promptStore.addExecution({
+      prompt: promptStore.currentPrompt,
+      response: response.data.content,
+      success: true
+    })
+    
+    metricsStore.addMetrics({
+      inputTokens: response.data.inputTokens,
+      outputTokens: response.data.outputTokens,
+      totalTokens: response.data.inputTokens + response.data.outputTokens,
+      executionTimeMs: response.data.latencyMs,
+      cost: response.data.cost,
+      modelName: response.data.model,
+      providerName: llmStore.selectedModel.providerName
+    })
+    
+    // Animate response card
+    gsap.from(responseCard.value, {
+      scale: 0.98,
+      opacity: 0,
+      duration: 0.3,
+      ease: 'power2.out'
+    })
+  } catch (error: any) {
+    const errorMessage = error.response?.data?.detail || error.message || 'Unknown error occurred'
+    promptStore.setResponse('')
+    promptStore.addExecution({
+      prompt: promptStore.currentPrompt,
+      response: '',
+      success: false,
+      error: errorMessage
+    })
+    console.error('Error executing prompt:', error)
+  } finally {
+    promptStore.setExecuting(false)
+  }
+}
+
   const startTime = Date.now()
   
   try {

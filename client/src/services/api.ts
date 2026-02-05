@@ -1,6 +1,7 @@
 import axios from 'axios'
 import type {
   ProviderInfoResponse,
+  ProviderStatusResponse,
   ModelInfoResponse,
   ExecutePromptRequest,
   ExecutePromptResponse,
@@ -54,6 +55,10 @@ export const getProviders = () => {
 
 export const getProviderModels = (providerName: string) => {
   return api.get<ModelInfoResponse[]>(`/providers/${providerName}/models`)
+}
+
+export const getProviderStatus = (providerName: string) => {
+  return api.get<ProviderStatusResponse>(`/providers/${providerName}/status`)
 }
 
 // Prompt endpoints
