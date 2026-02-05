@@ -28,6 +28,7 @@ public class PromptsControllerTests
         // Arrange
         var request = new ExecutePromptRequest
         {
+            Provider = AiProvider.Google,
             Prompt = "What is AI?",
             Model = "gemini-1.5-flash"
         };
@@ -48,6 +49,7 @@ public class PromptsControllerTests
 
         _mockPromptService
             .Setup(s => s.ExecutePromptAsync(
+                It.IsAny<AiProvider>(),
                 It.IsAny<string>(),
                 It.IsAny<string?>(),
                 It.IsAny<Guid?>(),
@@ -76,10 +78,15 @@ public class PromptsControllerTests
     public async Task ExecutePrompt_ServiceThrowsArgumentException_ThrowsException()
     {
         // Arrange
-        var request = new ExecutePromptRequest { Prompt = "Test" };
+        var request = new ExecutePromptRequest 
+        { 
+            Provider = AiProvider.Google,
+            Prompt = "Test" 
+        };
 
         _mockPromptService
             .Setup(s => s.ExecutePromptAsync(
+                It.IsAny<AiProvider>(),
                 It.IsAny<string>(),
                 It.IsAny<string?>(),
                 It.IsAny<Guid?>(),

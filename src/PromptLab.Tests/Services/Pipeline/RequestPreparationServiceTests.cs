@@ -2,6 +2,7 @@ using FluentAssertions;
 using Microsoft.Extensions.Logging;
 using Moq;
 using PromptLab.Core.Builders;
+using PromptLab.Core.Domain.Enums;
 using PromptLab.Core.DTOs;
 using PromptLab.Core.Services;
 using PromptLab.Core.Validators;
@@ -134,10 +135,11 @@ public class RequestPreparationServiceTests
 
         // Act
         var result = await _service.PrepareAsync(
-            prompt, systemPrompt, null, null, model, null, null, userId, CancellationToken.None);
+            AiProvider.Google, prompt, systemPrompt, null, null, model, null, null, userId, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
+        result.Provider.Should().Be(AiProvider.Google);
         result.LlmRequest.Should().Be(expectedLlmRequest);
         result.ContextFileId.Should().Be(contextFileId);
         result.ConversationHistory.Should().BeEmpty();
@@ -192,7 +194,7 @@ public class RequestPreparationServiceTests
 
         // Act
         var result = await _service.PrepareAsync(
-            prompt, null, conversationId, null, null, null, null, userId, CancellationToken.None);
+            AiProvider.Google, prompt, null, conversationId, null, null, null, null, userId, CancellationToken.None);
 
         // Assert
         result.Should().NotBeNull();
@@ -234,7 +236,7 @@ public class RequestPreparationServiceTests
 
         // Act
         var result = await _service.PrepareAsync(
-            prompt, null, null, null, null, null, null, userId, CancellationToken.None);
+            AiProvider.Google, prompt, null, null, null, null, null, null, userId, CancellationToken.None);
 
         // Assert
         result.Model.Should().Be("gemini-1.5-flash");
@@ -275,7 +277,7 @@ public class RequestPreparationServiceTests
 
         // Act
         var result = await _service.PrepareAsync(
-            prompt, null, null, contextFileIds, null, null, null, userId, CancellationToken.None);
+            AiProvider.Google, prompt, null, null, contextFileIds, null, null, null, userId, CancellationToken.None);
 
         // Assert
         result.LlmRequest.Prompt.Should().Be(enrichedPrompt);
@@ -321,7 +323,7 @@ public class RequestPreparationServiceTests
 
         // Act
         var result = await _service.PrepareAsync(
-            prompt, null, null, null, null, maxTokens, temperature, userId, CancellationToken.None);
+            AiProvider.Google, prompt, null, null, null, null, maxTokens, temperature, userId, CancellationToken.None);
 
         // Assert
         _llmRequestBuilderMock.Verify(
@@ -360,7 +362,7 @@ public class RequestPreparationServiceTests
 
         // Act
         await _service.PrepareAsync(
-            prompt, null, null, contextFileIds, null, null, null, userId, CancellationToken.None);
+            AiProvider.Google, prompt, null, null, contextFileIds, null, null, null, userId, CancellationToken.None);
 
         // Assert
         callOrder.Should().HaveCount(3);

@@ -43,9 +43,11 @@ public class PromptsController : ControllerBase
         [FromBody] ExecutePromptRequest request,
         CancellationToken cancellationToken)
     {
-        _logger.LogInformation("Executing prompt with model: {Model}", request.Model ?? "default");
+        _logger.LogInformation("Executing prompt with provider: {Provider}, model: {Model}", 
+            request.Provider, request.Model ?? "default");
 
         var result = await _promptService.ExecutePromptAsync(
+            request.Provider,
             request.Prompt,
             request.SystemPrompt,
             request.ConversationId,
