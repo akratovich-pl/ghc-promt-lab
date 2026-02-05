@@ -43,4 +43,12 @@ public interface ILlmProvider
     /// </summary>
     /// <returns>True if the provider is ready to process requests; otherwise, false.</returns>
     Task<bool> IsAvailable();
+
+    /// <summary>
+    /// Retrieves the list of available models from the provider.
+    /// </summary>
+    /// <param name="cancellationToken">Token to cancel the operation.</param>
+    /// <returns>A list of model information available from this provider.</returns>
+    /// <exception cref="InvalidOperationException">Thrown when the provider is not available or configured.</exception>
+    Task<List<ModelInfo>> GetAvailableModelsAsync(CancellationToken cancellationToken = default);
 }

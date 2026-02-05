@@ -82,3 +82,36 @@ public class GroqUsage
     [JsonPropertyName("total_tokens")]
     public int TotalTokens { get; set; }
 }
+
+/// <summary>
+/// Response model from Groq list models endpoint
+/// </summary>
+public class GroqModelsResponse
+{
+    [JsonPropertyName("object")]
+    public string? Object { get; set; }
+
+    [JsonPropertyName("data")]
+    public List<GroqModelData>? Data { get; set; }
+}
+
+public class GroqModelData
+{
+    [JsonPropertyName("id")]
+    public string Id { get; set; } = string.Empty;
+
+    [JsonPropertyName("object")]
+    public string? Object { get; set; }
+
+    [JsonPropertyName("created")]
+    public long? Created { get; set; }
+
+    [JsonPropertyName("owned_by")]
+    public string? OwnedBy { get; set; }
+
+    [JsonPropertyName("active")]
+    public bool? Active { get; set; }
+
+    [JsonPropertyName("context_window")]
+    public int? ContextWindow { get; set; }
+}
