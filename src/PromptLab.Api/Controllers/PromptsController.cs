@@ -1,4 +1,5 @@
 using Microsoft.AspNetCore.Mvc;
+using PromptLab.Api.Extensions;
 using PromptLab.Api.Models;
 using PromptLab.Core.Services;
 
@@ -54,19 +55,7 @@ public class PromptsController : ControllerBase
             request.Temperature,
             cancellationToken);
 
-        var response = new ExecutePromptResponse
-        {
-            Id = result.PromptId,
-            Content = result.Content,
-            InputTokens = result.InputTokens,
-            OutputTokens = result.OutputTokens,
-            Cost = result.Cost,
-            LatencyMs = result.LatencyMs,
-            Model = result.Model,
-            CreatedAt = result.CreatedAt
-        };
-
-        return Ok(response);
+        return Ok(result.ToResponse());
     }
 
     /// <summary>
@@ -93,14 +82,7 @@ public class PromptsController : ControllerBase
             request.Model,
             cancellationToken);
 
-        var response = new EstimateTokensResponse
-        {
-            TokenCount = estimate.TokenCount,
-            EstimatedCost = estimate.EstimatedCost,
-            Model = estimate.Model
-        };
-
-        return Ok(response);
+        return Ok(estimate.ToResponse());
     }
 
     /// <summary>
@@ -136,33 +118,7 @@ public class PromptsController : ControllerBase
 
         // Note: This is a simplified mapping. In a real implementation,
         // we would fetch the full prompt details from the database
-        var response = new PromptDetailResponse
-        {
-            Id = result.PromptId,
-            ConversationId = Guid.Empty, // Would be fetched from DB
-            UserPrompt = string.Empty,    // Would be fetched from DB
-            Context = null,
-            ContextFileId = null,
-            EstimatedTokens = 0,
-            ActualTokens = result.InputTokens + result.OutputTokens,
-            CreatedAt = result.CreatedAt,
-            Responses = new List<ResponseDetail>
-            {
-                new ResponseDetail
-                {
-                    Id = result.ResponseId,
-                    Provider = result.Provider.ToString(),
-                    Model = result.Model,
-                    Content = result.Content,
-                    Tokens = result.OutputTokens,
-                    Cost = result.Cost,
-                    LatencyMs = result.LatencyMs,
-                    CreatedAt = result.CreatedAt
-                }
-            }
-        };
-
-        return Ok(response);
+        return Ok(result.ToDetailResponse(Guid.Empty));
     }
 
     /// <summary>
@@ -193,32 +149,6 @@ public class PromptsController : ControllerBase
             return Ok(new List<PromptDetailResponse>());
         }
 
-        var responses = results.Select(result => new PromptDetailResponse
-        {
-            Id = result.PromptId,
-            ConversationId = conversationId,
-            UserPrompt = string.Empty,  // Would be fetched from DB
-            Context = null,
-            ContextFileId = null,
-            EstimatedTokens = 0,
-            ActualTokens = result.InputTokens + result.OutputTokens,
-            CreatedAt = result.CreatedAt,
-            Responses = new List<ResponseDetail>
-            {
-                new ResponseDetail
-                {
-                    Id = result.ResponseId,
-                    Provider = result.Provider.ToString(),
-                    Model = result.Model,
-                    Content = result.Content,
-                    Tokens = result.OutputTokens,
-                    Cost = result.Cost,
-                    LatencyMs = result.LatencyMs,
-                    CreatedAt = result.CreatedAt
-                }
-            }
-        }).ToList();
-
-        return Ok(responses);
+        return Ok(results.ToDetailResponses(conversationId));
     }
 }
