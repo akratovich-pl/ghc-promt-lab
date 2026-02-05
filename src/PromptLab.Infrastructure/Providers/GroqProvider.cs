@@ -244,6 +244,61 @@ public class GroqProvider : ILlmProvider
         }
     }
 
+    public async Task<List<ModelInfo>> GetAvailableModelsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Fetching available models from Groq API");
+
+            var httpClient = CreateHttpClient();
+            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/models";
+
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
+            requestMessage.Headers.Add("Authorization", $"Bearer {_config.ApiKey}");
+
+            var response = await httpClient.SendAsync(requestMessage, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogError(
+                    "Failed to fetch models from Groq API. Status: {StatusCode}, Error: {Error}",
+                    response.StatusCode,
+                    errorContent);
+                return new List<ModelInfo>();
+            }
+
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+            var modelsResponse = JsonSerializer.Deserialize<GroqModelsResponse>(responseJson, _jsonOptions);
+
+            if (modelsResponse?.Data == null)
+            {
+                _logger.LogWarning("No models returned from Groq API");
+                return new List<ModelInfo>();
+            }
+
+            var models = modelsResponse.Data
+                .Select(m => new ModelInfo
+                {
+                    Name = m.Id,
+                    DisplayName = m.Id, // Groq doesn't provide separate display names
+                    Provider = Provider,
+                    MaxTokens = m.ContextWindow ?? 8192,
+                    InputCostPer1kTokens = _config.InputTokenCostPer1K,
+                    OutputCostPer1kTokens = _config.OutputTokenCostPer1K
+                })
+                .ToList();
+
+            _logger.LogInformation("Retrieved {ModelCount} models from Groq API", models.Count);
+            return models;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching models from Groq API");
+            return new List<ModelInfo>();
+        }
+    }
+
     private GroqChatRequest BuildGroqRequest(LlmRequest request)
     {
         var messages = new List<GroqMessage>();

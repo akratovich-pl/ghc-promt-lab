@@ -45,14 +45,41 @@ public class ProviderService : IProviderService
             // Find the corresponding ILlmProvider
             var llmProvider = _llmProviders.FirstOrDefault(p => p.Provider == providerEnum);
             
-            // Check availability
+            // Check availability and get real models from provider
             var isAvailable = false;
+            var supportedModels = new List<string>();
+            
             if (llmProvider != null)
             {
-                isAvailable = await llmProvider.IsAvailable();
+                try
+                {
+                    isAvailable = await llmProvider.IsAvailable();
+                    
+                    if (isAvailable)
+                    {
+                        // Get real models from provider API
+                        var models = await llmProvider.GetAvailableModelsAsync(cancellationToken);
+                        supportedModels = models.Select(m => m.Name).ToList();
+                        
+                        _logger.LogInformation(
+                            "Retrieved {ModelCount} real models from provider {ProviderName}",
+                            supportedModels.Count,
+                            providerName);
+                    }
+                    else
+                    {
+                        _logger.LogWarning(
+                            "Provider {ProviderName} is not available, using empty model list",
+                            providerName);
+                    }
+                }
+                catch (Exception ex)
+                {
+                    _logger.LogError(ex, 
+                        "Error retrieving models from provider {ProviderName}, using empty model list",
+                        providerName);
+                }
             }
-
-            var supportedModels = providerSettings.Models?.Select(m => m.Name).ToList() ?? new List<string>();
 
             providers.Add(new ProviderInfo
             {

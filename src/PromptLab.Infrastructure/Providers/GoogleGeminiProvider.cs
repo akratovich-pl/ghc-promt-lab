@@ -277,6 +277,60 @@ public class GoogleGeminiProvider : ILlmProvider
         }
     }
 
+    public async Task<List<ModelInfo>> GetAvailableModelsAsync(CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            _logger.LogInformation("Fetching available models from Google Gemini API");
+
+            var httpClient = CreateHttpClient();
+            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/models?key={_config.ApiKey}";
+
+            var response = await httpClient.GetAsync(url, cancellationToken);
+
+            if (!response.IsSuccessStatusCode)
+            {
+                var errorContent = await response.Content.ReadAsStringAsync(cancellationToken);
+                _logger.LogError(
+                    "Failed to fetch models from Google Gemini API. Status: {StatusCode}, Error: {Error}",
+                    response.StatusCode,
+                    errorContent);
+                return new List<ModelInfo>();
+            }
+
+            var responseJson = await response.Content.ReadAsStringAsync(cancellationToken);
+            var modelsResponse = JsonSerializer.Deserialize<GeminiModelsResponse>(responseJson, _jsonOptions);
+
+            if (modelsResponse?.Models == null)
+            {
+                _logger.LogWarning("No models returned from Google Gemini API");
+                return new List<ModelInfo>();
+            }
+
+            // Filter models that support generateContent
+            var models = modelsResponse.Models
+                .Where(m => m.SupportedGenerationMethods?.Contains("generateContent") == true)
+                .Select(m => new ModelInfo
+                {
+                    Name = m.Name.Replace("models/", ""), // Remove "models/" prefix
+                    DisplayName = m.DisplayName ?? m.Name,
+                    Provider = Provider,
+                    MaxTokens = m.OutputTokenLimit ?? 8192,
+                    InputCostPer1kTokens = _config.InputTokenCostPer1K,
+                    OutputCostPer1kTokens = _config.OutputTokenCostPer1K
+                })
+                .ToList();
+
+            _logger.LogInformation("Retrieved {ModelCount} models from Google Gemini API", models.Count);
+            return models;
+        }
+        catch (Exception ex)
+        {
+            _logger.LogError(ex, "Error fetching models from Google Gemini API");
+            return new List<ModelInfo>();
+        }
+    }
+
     private GeminiGenerateRequest BuildGeminiRequest(LlmRequest request)
     {
         var contents = new List<GeminiContent>();
