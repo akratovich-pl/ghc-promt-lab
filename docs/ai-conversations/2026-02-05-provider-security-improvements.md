@@ -145,7 +145,45 @@ update our conversation history logs and commit to repo
 
 ### AI Response
 Created this conversation log following project instructions and preparing to commit 
-to repository.
+to repository. Committed directly to main branch and pushed to GitHub.
+
+---
+
+### Human
+Suggest me instruction file content for "create an issue/task". My preferences are: 
+the issue should be described enough and sufficient to be taken by experienced 
+engineer, no need to put code examples. Less details.
+
+### AI Response
+Created GitHub issues instruction file at `.github/instructions/github-issues.instructions.md` 
+with these key principles:
+Created GitHub issues instruction guide for the project
+- ✅ 
+**Focus areas:**
+- Brief but sufficient context for experienced engineers
+- No code examples or implementation prescriptions
+- Investigation points instead of detailed solutions
+- Observable behavior over internal implementation details
+- Clear structure with emoji-marked sections for quick scanning
+
+**Content includes:**
+- Issue title guidelines (concise, present tense for bugs, imperative for features)
+- Structured body format with sections for bugs, features, and tasks
+- What NOT to include (code snippets, step-by-step instructions, debugging logs)
+- Quality checklist to ensure well-formed issues
+- Examples of good vs poor issue writing
+- Special cases for architecture decisions and security issues
+
+The guide helps create actionable issues that respect the reader's experience level 
+while providing sufficient context for independent work.
+
+---
+
+### Human
+update our conversation logs, and let's call it a day.
+
+### AI Response
+Updating conversation log with final session details and committing to repository.
 
 ## Outcomes & Next Steps
 
@@ -168,6 +206,7 @@ to repository.
 **Files Modified:**
 - `GoogleGeminiProvider.cs` - Security improvements and availability check
 - `appsettings.json` - Removed hardcoded models, updated default
+- `.github/instructions/github-issues.instructions.md` - New instruction guide
 - `2026-02-05-provider-security-improvements.md` - This conversation log
 
 ## Reflection
@@ -204,4 +243,6 @@ to repository.
 - Emphasize defensive coding: availability checks should use reliable indicators
 - Highlight importance of following provider-specific best practices (Google's header 
   naming)
+- Create project-specific guidelines to maintain consistency (like issue creation 
+  instructions)
 - Document bugs immediately with clear reproduction steps for team efficiency
