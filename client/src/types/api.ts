@@ -1,4 +1,10 @@
-// API Types - matching backend models
+// API Types - matching backend models exactly
+
+// Backend enum AiProvider
+export enum AiProvider {
+  Google = 0,
+  Groq = 1
+}
 
 export interface ProviderInfoResponse {
   name: string
@@ -15,7 +21,15 @@ export interface ModelInfoResponse {
   outputCostPer1kTokens: number
 }
 
+export interface ProviderStatusResponse {
+  name: string
+  isHealthy: boolean
+  errorMessage?: string
+  lastChecked: string
+}
+
 export interface ExecutePromptRequest {
+  provider: AiProvider  // Required field!
   prompt: string
   systemPrompt?: string
   conversationId?: string
