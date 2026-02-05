@@ -1,23 +1,23 @@
 <template>
   <div 
     ref="containerRef"
-    class="input-block bg-white dark:bg-gray-800 rounded-lg shadow-md p-6 mb-6"
+    class="input-block bg-white rounded-lg shadow-md border border-gray-200 p-6 mb-6"
   >
-    <h2 class="text-2xl font-bold text-gray-900 dark:text-white mb-4">
+    <h2 class="text-2xl font-bold text-gray-900 mb-4">
       Input Prompt
     </h2>
 
     <!-- System Prompt (Optional) -->
     <div class="mb-4">
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
         System Prompt (Optional)
       </label>
       <textarea
         v-model="localSystemPrompt"
         placeholder="Provide context or instructions for the AI..."
-        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-               bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-               focus:ring-2 focus:ring-primary-500 focus:border-transparent
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg 
+               bg-white text-gray-900 placeholder-gray-400
+               focus:ring-2 focus:ring-primary-500 focus:border-primary-500
                resize-none"
         rows="2"
       ></textarea>
@@ -25,15 +25,15 @@
 
     <!-- Main Prompt Input -->
     <div class="mb-4">
-      <label class="block text-sm font-medium text-gray-700 dark:text-gray-300 mb-2">
+      <label class="block text-sm font-medium text-gray-700 mb-2">
         Your Prompt <span class="text-red-500">*</span>
       </label>
       <textarea
         v-model="localPrompt"
         placeholder="Enter your prompt here..."
-        class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg 
-               bg-white dark:bg-gray-700 text-gray-900 dark:text-white
-               focus:ring-2 focus:ring-primary-500 focus:border-transparent
+        class="w-full px-4 py-3 border border-gray-300 rounded-lg 
+               bg-white text-gray-900 placeholder-gray-400
+               focus:ring-2 focus:ring-primary-500 focus:border-primary-500
                resize-none"
         rows="6"
       ></textarea>
@@ -42,15 +42,15 @@
     <!-- Token Estimation -->
     <div 
       v-if="promptStore.tokenEstimate" 
-      class="mb-4 p-4 bg-blue-50 dark:bg-blue-900/30 border border-blue-200 dark:border-blue-800 rounded-lg"
+      class="mb-4 p-4 bg-blue-50 border border-blue-200 rounded-lg"
     >
       <div class="flex justify-between items-center">
         <div>
-          <p class="text-sm font-medium text-blue-900 dark:text-blue-300">
+          <p class="text-sm font-medium text-blue-900">
             Estimated Tokens: 
             <span class="font-bold">{{ promptStore.tokenEstimate.tokenCount }}</span>
           </p>
-          <p class="text-xs text-blue-700 dark:text-blue-400 mt-1">
+          <p class="text-xs text-blue-700 mt-1">
             Estimated Cost: ${{ promptStore.tokenEstimate.estimatedCost.toFixed(6) }}
           </p>
         </div>
@@ -66,8 +66,8 @@
       <button
         @click="handleExecute"
         :disabled="!canExecute || promptStore.executing"
-        class="flex-1 px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold 
-               rounded-lg shadow-lg transition-all duration-200 disabled:opacity-50 
+        class="flex-1 px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 
+               text-white font-semibold rounded-lg shadow-md transition-all duration-200 
                disabled:cursor-not-allowed flex items-center justify-center gap-2"
       >
         <span v-if="promptStore.executing" class="animate-spin rounded-full h-5 w-5 border-b-2 border-white"></span>
@@ -77,9 +77,9 @@
       <button
         @click="handleClear"
         :disabled="promptStore.executing"
-        class="px-6 py-3 bg-gray-200 hover:bg-gray-300 dark:bg-gray-700 dark:hover:bg-gray-600 
-               text-gray-900 dark:text-white font-semibold rounded-lg shadow-lg 
-               transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
+        class="px-6 py-3 bg-blue-100 hover:bg-blue-200 border border-blue-200 hover:border-blue-300
+               text-blue-800 font-semibold rounded-lg shadow-sm 
+               transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
       >
         Clear
       </button>
@@ -88,7 +88,7 @@
     <!-- Error Display -->
     <div 
       v-if="promptStore.error" 
-      class="mt-4 p-4 bg-red-100 dark:bg-red-900/30 border border-red-400 text-red-700 dark:text-red-300 rounded"
+      class="mt-4 p-4 bg-red-50 border border-red-300 text-red-800 rounded"
     >
       {{ promptStore.error }}
     </div>

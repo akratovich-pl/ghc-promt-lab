@@ -1,23 +1,23 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-purple-50 to-pink-100 dark:from-gray-900 dark:to-gray-800">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50">
     <!-- Header -->
-    <header class="bg-white dark:bg-gray-800 shadow-md">
-      <div class="max-w-7xl mx-auto px-4 py-4 sm:px-6 lg:px-8">
+    <header class="bg-white border-b border-gray-200 shadow-sm">
+      <div class="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between">
           <div class="flex items-center space-x-4">
-            <div class="text-3xl">🧪</div>
+            <div class="text-4xl">🧪</div>
             <div>
-              <h1 class="text-2xl font-bold text-gray-900 dark:text-white">
+              <h1 class="text-3xl font-bold text-gray-900">
                 PromptLab
               </h1>
-              <p class="text-sm text-gray-500 dark:text-gray-400">
+              <p class="text-sm text-gray-600 font-medium">
                 {{ llmStore.selectedModel?.providerName }} - {{ llmStore.selectedModel?.modelName }}
               </p>
             </div>
           </div>
           <button
             @click="changeModel"
-            class="px-4 py-2 bg-primary-600 hover:bg-primary-700 text-white rounded-lg transition-colors"
+            class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-all shadow-sm hover:shadow-md"
           >
             Change Model
           </button>
@@ -33,25 +33,25 @@
           <!-- Prompt Input Card -->
           <div 
             ref="promptCard"
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6"
+            class="bg-white rounded-xl shadow-md border border-gray-200 p-6"
           >
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
               Prompt Input
             </h2>
             <textarea
               v-model="promptStore.currentPrompt"
               placeholder="Enter your prompt here..."
               rows="8"
-              class="w-full px-4 py-3 border border-gray-300 dark:border-gray-600 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent bg-white dark:bg-gray-700 text-gray-900 dark:text-white resize-none"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-gray-900 placeholder-gray-400 resize-none"
             ></textarea>
             <div class="mt-4 flex items-center justify-between">
-              <div class="text-sm text-gray-500 dark:text-gray-400">
+              <div class="text-sm text-gray-600 font-medium">
                 Characters: {{ promptStore.currentPrompt.length }}
               </div>
               <button
                 @click="executePrompt"
                 :disabled="!promptStore.currentPrompt.trim() || promptStore.isExecuting"
-                class="px-6 py-3 bg-primary-600 hover:bg-primary-700 disabled:bg-gray-400 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-colors"
+                class="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all shadow-sm hover:shadow-md"
               >
                 {{ promptStore.isExecuting ? 'Executing...' : 'Execute' }}
               </button>
@@ -61,20 +61,20 @@
           <!-- Response Card -->
           <div 
             ref="responseCard"
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6"
+            class="bg-white rounded-xl shadow-md border border-gray-200 p-6"
           >
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
               Response
             </h2>
             <div 
               v-if="promptStore.currentResponse"
-              class="prose dark:prose-invert max-w-none p-4 bg-gray-50 dark:bg-gray-900 rounded-lg min-h-[200px]"
+              class="prose max-w-none p-4 bg-gray-50 rounded-lg min-h-[200px] text-gray-900 border border-gray-200"
             >
               {{ promptStore.currentResponse }}
             </div>
             <div 
               v-else
-              class="text-gray-400 dark:text-gray-500 italic p-4 bg-gray-50 dark:bg-gray-900 rounded-lg min-h-[200px] flex items-center justify-center"
+              class="text-gray-500 italic p-4 bg-gray-50 rounded-lg min-h-[200px] flex items-center justify-center border border-gray-200"
             >
               Response will appear here after execution
             </div>
@@ -86,33 +86,33 @@
           <!-- Metrics Card -->
           <div 
             ref="metricsCard"
-            class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6"
+            class="bg-white rounded-xl shadow-md border border-gray-200 p-6"
           >
-            <h2 class="text-xl font-semibold text-gray-900 dark:text-white mb-4">
+            <h2 class="text-xl font-semibold text-gray-900 mb-4">
               Metrics
             </h2>
-            <div class="space-y-3">
-              <div class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">Total Executions</span>
-                <span class="font-bold text-gray-900 dark:text-white">
+            <div class="space-y-4">
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-gray-700 font-medium">Total Executions</span>
+                <span class="font-bold text-gray-900 text-lg">
                   {{ metricsStore.totalExecutions }}
                 </span>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">Total Tokens</span>
-                <span class="font-bold text-gray-900 dark:text-white">
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-gray-700 font-medium">Total Tokens</span>
+                <span class="font-bold text-gray-900 text-lg">
                   {{ metricsStore.totalTokensUsed.toLocaleString() }}
                 </span>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">Total Cost</span>
-                <span class="font-bold text-green-600 dark:text-green-400">
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-gray-700 font-medium">Total Cost</span>
+                <span class="font-bold text-accent-green text-lg">
                   ${{ metricsStore.totalCost.toFixed(4) }}
                 </span>
               </div>
-              <div class="flex justify-between items-center">
-                <span class="text-gray-600 dark:text-gray-400">Avg Time</span>
-                <span class="font-bold text-gray-900 dark:text-white">
+              <div class="flex justify-between items-center py-2">
+                <span class="text-gray-700 font-medium">Avg Time</span>
+                <span class="font-bold text-gray-900 text-lg">
                   {{ metricsStore.averageExecutionTime.toFixed(0) }}ms
                 </span>
               </div>
@@ -120,15 +120,15 @@
           </div>
 
           <!-- History Card -->
-          <div class="bg-white dark:bg-gray-800 rounded-xl shadow-lg p-6">
+          <div class="bg-white rounded-xl shadow-md border border-gray-200 p-6">
             <div class="flex justify-between items-center mb-4">
-              <h2 class="text-xl font-semibold text-gray-900 dark:text-white">
+              <h2 class="text-xl font-semibold text-gray-900">
                 History
               </h2>
               <button
                 v-if="promptStore.hasHistory"
                 @click="promptStore.clearHistory"
-                class="text-sm text-red-600 hover:text-red-700 dark:text-red-400"
+                class="text-sm px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium rounded transition-colors"
               >
                 Clear
               </button>
@@ -137,18 +137,18 @@
               <div
                 v-for="execution in promptStore.executionHistory.slice(0, 10)"
                 :key="execution.id"
-                class="p-3 bg-gray-50 dark:bg-gray-900 rounded-lg hover:bg-gray-100 dark:hover:bg-gray-700 transition-colors cursor-pointer"
+                class="p-3 bg-blue-50 border border-blue-100 rounded-lg hover:bg-blue-100 hover:border-blue-200 transition-all cursor-pointer"
                 @click="loadExecution(execution)"
               >
-                <div class="text-sm text-gray-600 dark:text-gray-400 mb-1">
+                <div class="text-xs text-gray-600 font-medium mb-1">
                   {{ new Date(execution.timestamp).toLocaleTimeString() }}
                 </div>
-                <div class="text-sm text-gray-900 dark:text-white truncate">
+                <div class="text-sm text-gray-900 truncate">
                   {{ truncatePrompt(execution.prompt) }}
                 </div>
               </div>
             </div>
-            <div v-else class="text-gray-400 dark:text-gray-500 italic text-center py-8">
+            <div v-else class="text-gray-500 italic text-center py-8">
               No execution history yet
             </div>
           </div>

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 dark:from-gray-900 dark:to-gray-800 py-8 px-4">
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50 py-8 px-4">
     <div class="max-w-7xl mx-auto">
       <!-- Header -->
       <div class="text-center mb-8">
@@ -10,10 +10,10 @@
         >
           🚀
         </div>
-        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 dark:text-white mb-2">
+        <h1 class="text-4xl md:text-5xl font-bold text-gray-900 mb-2">
           PromptLab
         </h1>
-        <p class="text-lg text-gray-600 dark:text-gray-300">
+        <p class="text-lg text-gray-600">
           AI Prompt Testing & Visualization Tool
         </p>
       </div>
@@ -21,14 +21,14 @@
     <div class="flex gap-4">
       <button
         @click="animateRocket"
-        class="px-6 py-3 bg-primary-600 hover:bg-primary-700 text-white font-semibold rounded-lg shadow-lg transition-colors duration-200"
+        class="px-6 py-3 bg-blue-500 hover:bg-blue-600 text-white font-semibold rounded-lg shadow-md transition-all duration-200"
       >
         Test Animation (GSAP)
       </button>
       
       <router-link
         to="/lab"
-        class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-lg transition-colors duration-200"
+        class="px-6 py-3 bg-green-600 hover:bg-green-700 text-white font-semibold rounded-lg shadow-md transition-all duration-200"
       >
         🧪 Open Prompt Lab
       </router-link>
@@ -44,23 +44,23 @@
       <!-- Footer with status indicators -->
       <div class="mt-8 text-center">
         <div class="flex gap-3 justify-center flex-wrap">
-          <div class="px-3 py-1.5 bg-green-100 dark:bg-green-900/30 rounded-lg text-sm">
-            <span class="text-green-800 dark:text-green-300">✓ Vue 3</span>
+          <div class="px-3 py-1.5 bg-green-100 border border-green-200 rounded-lg text-sm">
+            <span class="text-green-800">✓ Vue 3</span>
           </div>
-          <div class="px-3 py-1.5 bg-blue-100 dark:bg-blue-900/30 rounded-lg text-sm">
-            <span class="text-blue-800 dark:text-blue-300">✓ Pinia</span>
+          <div class="px-3 py-1.5 bg-blue-100 border border-blue-200 rounded-lg text-sm">
+            <span class="text-blue-800">✓ Pinia</span>
           </div>
-          <div class="px-3 py-1.5 bg-purple-100 dark:bg-purple-900/30 rounded-lg text-sm">
-            <span class="text-purple-800 dark:text-purple-300">✓ GSAP</span>
+          <div class="px-3 py-1.5 bg-purple-100 border border-purple-200 rounded-lg text-sm">
+            <span class="text-purple-800">✓ GSAP</span>
           </div>
-          <div class="px-3 py-1.5 bg-pink-100 dark:bg-pink-900/30 rounded-lg text-sm">
-            <span class="text-pink-800 dark:text-pink-300">✓ VueUse</span>
+          <div class="px-3 py-1.5 bg-pink-100 border border-pink-200 rounded-lg text-sm">
+            <span class="text-pink-800">✓ VueUse</span>
           </div>
           <div 
-            class="px-3 py-1.5 rounded-lg text-sm"
-            :class="apiConnected ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-red-100 dark:bg-red-900/30'"
+            class="px-3 py-1.5 rounded-lg text-sm border"
+            :class="apiConnected ? 'bg-emerald-100 border-emerald-200' : 'bg-red-100 border-red-200'"
           >
-            <span :class="apiConnected ? 'text-emerald-800 dark:text-emerald-300' : 'text-red-800 dark:text-red-300'">
+            <span :class="apiConnected ? 'text-emerald-800' : 'text-red-800'">
               {{ apiConnected ? '✓ API Connected' : '✗ API Disconnected' }}
             </span>
           </div>
