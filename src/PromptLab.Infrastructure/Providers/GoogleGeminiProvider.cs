@@ -75,7 +75,7 @@ public class GoogleGeminiProvider : ILlmProvider
 
             var geminiRequest = BuildGeminiRequest(request);
             var httpClient = CreateHttpClient();
-            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/models/{model}:generateContent?key={_config.ApiKey}";
+            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/models/{model}:generateContent";
 
             var response = await _retryPolicy.ExecuteAsync(async () =>
             {
@@ -83,7 +83,13 @@ public class GoogleGeminiProvider : ILlmProvider
                 _logger.LogDebug("Request payload: {Payload}", jsonContent);
 
                 var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
-                return await httpClient.PostAsync(url, content, cancellationToken);
+                var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+                {
+                    Content = content
+                };
+                requestMessage.Headers.Add("x-goog-api-key", _config.ApiKey);
+                
+                return await httpClient.SendAsync(requestMessage, cancellationToken);
             });
 
             stopwatch.Stop();
@@ -219,12 +225,18 @@ public class GoogleGeminiProvider : ILlmProvider
             };
 
             var httpClient = CreateHttpClient();
-            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/models/{_config.Model}:countTokens?key={_config.ApiKey}";
+            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/models/{_config.Model}:countTokens";
 
             var jsonContent = JsonSerializer.Serialize(request, _jsonOptions);
             var content = new StringContent(jsonContent, Encoding.UTF8, "application/json");
+            
+            var requestMessage = new HttpRequestMessage(HttpMethod.Post, url)
+            {
+                Content = content
+            };
+            requestMessage.Headers.Add("x-goog-api-key", _config.ApiKey);
 
-            var response = await httpClient.PostAsync(url, content, cancellationToken);
+            var response = await httpClient.SendAsync(requestMessage, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
@@ -261,11 +273,11 @@ public class GoogleGeminiProvider : ILlmProvider
                 return false;
             }
 
-            // Quick availability check with a minimal token estimation request
-            var testPrompt = "test";
-            var tokenCount = await EstimateTokensAsync(testPrompt);
+            // Check availability by fetching the models list
+            // This is more reliable than token estimation and we need the models anyway
+            var models = await GetAvailableModelsAsync();
             
-            var isAvailable = tokenCount > 0;
+            var isAvailable = models.Count > 0;
             _logger.LogInformation("Provider availability: {IsAvailable}", isAvailable);
             
             return isAvailable;
@@ -284,9 +296,12 @@ public class GoogleGeminiProvider : ILlmProvider
             _logger.LogInformation("Fetching available models from Google Gemini API");
 
             var httpClient = CreateHttpClient();
-            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/models?key={_config.ApiKey}";
+            var url = $"{_config.BaseUrl}/{_config.ApiVersion}/models";
 
-            var response = await httpClient.GetAsync(url, cancellationToken);
+            var requestMessage = new HttpRequestMessage(HttpMethod.Get, url);
+            requestMessage.Headers.Add("x-goog-api-key", _config.ApiKey);
+
+            var response = await httpClient.SendAsync(requestMessage, cancellationToken);
 
             if (!response.IsSuccessStatusCode)
             {
