@@ -2,8 +2,8 @@
 
 // Backend enum AiProvider
 export enum AiProvider {
-  Google = 0,
-  Groq = 1
+  Google = 1,
+  Groq = 2
 }
 
 export interface ProviderInfoResponse {

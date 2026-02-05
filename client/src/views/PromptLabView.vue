@@ -263,63 +263,6 @@ async function executePrompt() {
   }
 }
 
-  const startTime = Date.now()
-  
-  try {
-    // Mock response - in real implementation, this would be an API call
-    await new Promise(resolve => setTimeout(resolve, 1500))
-    
-    const mockResponse = `This is a mock response to your prompt. In a real implementation, this would be the actual AI response from ${llmStore.selectedModel?.providerName}.`
-    const executionTime = Date.now() - startTime
-    
-    // Mock token counts (in real implementation, these would come from API)
-    const inputTokens = Math.ceil(promptStore.currentPrompt.length / CHARS_PER_TOKEN)
-    const outputTokens = Math.ceil(mockResponse.length / CHARS_PER_TOKEN)
-    const totalTokens = inputTokens + outputTokens
-    
-    // Calculate cost
-    const inputCost = llmStore.selectedModel?.model?.inputCostPer1kTokens || 0
-    const outputCost = llmStore.selectedModel?.model?.outputCostPer1kTokens || 0
-    const cost = metricsStore.calculateCost(inputTokens, outputTokens, inputCost, outputCost)
-    
-    // Update stores
-    promptStore.setResponse(mockResponse)
-    promptStore.addExecution({
-      prompt: promptStore.currentPrompt,
-      response: mockResponse,
-      success: true
-    })
-    
-    metricsStore.addMetrics({
-      inputTokens,
-      outputTokens,
-      totalTokens,
-      executionTimeMs: executionTime,
-      cost,
-      modelName: llmStore.selectedModel?.modelName || '',
-      providerName: llmStore.selectedModel?.providerName || ''
-    })
-    
-    // Animate response card
-    gsap.from(responseCard.value, {
-      scale: 0.98,
-      opacity: 0,
-      duration: 0.3,
-      ease: 'power2.out'
-    })
-  } catch (error) {
-    const errorMessage = error instanceof Error ? error.message : 'Unknown error occurred'
-    promptStore.addExecution({
-      prompt: promptStore.currentPrompt,
-      response: '',
-      success: false,
-      error: errorMessage
-    })
-  } finally {
-    promptStore.setExecuting(false)
-  }
-}
-
 function loadExecution(execution: PromptExecution) {
   promptStore.setPrompt(execution.prompt)
   promptStore.setResponse(execution.response)
