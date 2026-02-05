@@ -86,8 +86,8 @@ public static class Registration
         var geminiSection = builder.Configuration.GetSection("Providers:Google");
         geminiSection.Bind(geminiConfig);
         geminiConfig.Model = geminiSection.GetValue<string>("DefaultModel") ?? "gemini-pro";
-        // Override API key from environment variable
-        geminiConfig.ApiKey = Environment.GetEnvironmentVariable("GOOGLE_API_KEY") ?? string.Empty;
+        // API key from configuration (User Secrets, appsettings, or environment variables)
+        geminiConfig.ApiKey = geminiSection.GetValue<string>("ApiKey") ?? string.Empty;
         // Set default cost from the first model in the Models array (or use configured values as fallback)
         var geminiModels = geminiSection.GetSection("Models").Get<List<Core.Configuration.ModelSettings>>();
         if (geminiModels != null && geminiModels.Count > 0)
@@ -102,8 +102,8 @@ public static class Registration
         var groqSection = builder.Configuration.GetSection("Providers:Groq");
         groqSection.Bind(groqConfig);
         groqConfig.Model = groqSection.GetValue<string>("DefaultModel") ?? "llama-3.3-70b-versatile";
-        // Override API key from environment variable
-        groqConfig.ApiKey = Environment.GetEnvironmentVariable("GROQ_API_KEY") ?? string.Empty;
+        // API key from configuration (User Secrets, appsettings, or environment variables)
+        groqConfig.ApiKey = groqSection.GetValue<string>("ApiKey") ?? string.Empty;
         // Set default cost from the first model in the Models array (or use configured values as fallback)
         var groqModels = groqSection.GetSection("Models").Get<List<Core.Configuration.ModelSettings>>();
         if (groqModels != null && groqModels.Count > 0)

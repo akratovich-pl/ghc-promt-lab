@@ -1,48 +1,8 @@
 using Serilog;
 using PromptLab.Api;
 using PromptLab.Api.Extensions;
-using DotNetEnv;
 using PromptLab.Infrastructure.Data;
 using Microsoft.EntityFrameworkCore;
-
-// Load environment variables from .env file if it exists
-// Try multiple potential paths for .env file
-var currentDir = Directory.GetCurrentDirectory();
-var baseDir = AppContext.BaseDirectory;
-
-var envPaths = new[]
-{
-    Path.Combine(currentDir, ".env"),                                           // Current directory
-    Path.Combine(currentDir, "..", "..", ".env"),                              // Up 2 levels from project
-    Path.Combine(currentDir, "..", "..", "..", "..", "..", ".env"),           // From bin/Debug/net10.0
-    Path.Combine(baseDir, ".env"),                                            // Base directory
-    Path.Combine(baseDir, "..", "..", "..", "..", "..", ".env"),             // From base up to solution root
-    Path.GetFullPath(Path.Combine(baseDir, "..", "..", "..", "..", "..", "..", ".env")) // Extra level for safety
-};
-
-var envLoaded = false;
-var envPath = string.Empty;
-foreach (var path in envPaths)
-{
-    var fullPath = Path.GetFullPath(path);
-    if (File.Exists(fullPath))
-    {
-        Env.Load(fullPath);
-        envLoaded = true;
-        envPath = fullPath;
-        Console.WriteLine($"✓ Loaded .env file from: {fullPath}");
-        Console.WriteLine($"  Google API Key: {Environment.GetEnvironmentVariable("Providers__Google__ApiKey")?[..20]}...");
-        Console.WriteLine($"  Groq API Key: {Environment.GetEnvironmentVariable("Providers__Groq__ApiKey")?[..20]}...");
-        break;
-    }
-}
-
-// If .env not found, that's okay - we'll use environment variables directly
-if (!envLoaded)
-{
-    Console.WriteLine("⚠ No .env file found. Using system environment variables.");
-    // In test/production environments, environment variables may be set directly
-}
 
 // Configure Serilog
 Log.Logger = new LoggerConfiguration()
