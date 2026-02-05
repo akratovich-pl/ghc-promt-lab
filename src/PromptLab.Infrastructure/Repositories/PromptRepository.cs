@@ -32,6 +32,29 @@ public class PromptRepository : IPromptRepository
 
         try
         {
+            // Ensure conversation exists
+            var conversation = await _dbContext.Conversations
+                .FirstOrDefaultAsync(c => c.Id == conversationId, cancellationToken);
+
+            if (conversation == null)
+            {
+                // Create new conversation if it doesn't exist
+                conversation = new Conversation
+                {
+                    Id = conversationId,
+                    UserId = "system",
+                    Title = "New Conversation",
+                    CreatedAt = DateTime.UtcNow,
+                    UpdatedAt = DateTime.UtcNow
+                };
+                _dbContext.Conversations.Add(conversation);
+            }
+            else
+            {
+                // Update existing conversation timestamp
+                conversation.UpdatedAt = DateTime.UtcNow;
+            }
+
             // Save Prompt entity
             var promptEntity = new Prompt
             {
