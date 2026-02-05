@@ -1,3 +1,4 @@
+using PromptLab.Core.Domain.Enums;
 using PromptLab.Core.DTOs;
 
 namespace PromptLab.Core.Services;
@@ -11,6 +12,7 @@ public interface IPromptExecutionService
     /// Executes a prompt and returns the response
     /// </summary>
     Task<PromptExecutionResult> ExecutePromptAsync(
+        AiProvider provider,
         string prompt,
         string? systemPrompt = null,
         Guid? conversationId = null,

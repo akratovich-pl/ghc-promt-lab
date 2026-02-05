@@ -31,15 +31,15 @@ public class LlmExecutionService : ILlmExecutionService
             throw new ArgumentNullException(nameof(request));
 
         _logger.LogInformation(
-            "Executing LLM request with model {Model}. CorrelationId: {CorrelationId}",
-            request.Model, correlationId);
+            "Executing LLM request with provider {Provider}, model {Model}. CorrelationId: {CorrelationId}",
+            request.Provider, request.Model, correlationId);
 
-        // Select provider based on model name
-        var provider = SelectProvider(request.Model);
+        // Select provider based on provider enum
+        var provider = SelectProvider(request.Provider);
 
         if (provider == null)
         {
-            var errorMessage = $"No provider found for model: {request.Model}";
+            var errorMessage = $"Provider {request.Provider} not found or not available";
             _logger.LogError("{ErrorMessage}. CorrelationId: {CorrelationId}", 
                 errorMessage, correlationId);
             throw new InvalidOperationException(errorMessage);
@@ -87,36 +87,20 @@ public class LlmExecutionService : ILlmExecutionService
     }
 
     /// <summary>
-    /// Selects the appropriate provider based on model name.
-    /// Currently uses model prefix matching (e.g., "gemini" -> Google, "gpt"/"llama"/"mixtral" -> Groq).
-    /// TODO: Replace with provider registry/factory pattern when adding dynamic configuration.
+    /// Selects the appropriate provider based on provider enum.
+    /// Direct lookup using the provider type specified in the request.
     /// </summary>
-    private ILlmProvider? SelectProvider(string modelName)
+    private ILlmProvider? SelectProvider(Core.Domain.Enums.AiProvider providerType)
     {
-        if (string.IsNullOrWhiteSpace(modelName))
-            return _llmProviders.FirstOrDefault();
-
-        var modelLower = modelName.ToLowerInvariant();
-
-        // Match based on model name prefix
-        // Gemini models: gemini-*
-        if (modelLower.StartsWith("gemini"))
+        var provider = _llmProviders.FirstOrDefault(p => p.Provider == providerType);
+        
+        if (provider == null)
         {
-            return _llmProviders.FirstOrDefault(p => p.Provider == Core.Domain.Enums.AiProvider.Google);
+            _logger.LogWarning(
+                "Provider {ProviderType} not found in registered providers",
+                providerType);
         }
-
-        // Groq models: gpt-*, llama-*, mixtral-*, etc.
-        if (modelLower.StartsWith("gpt") || 
-            modelLower.StartsWith("llama") || 
-            modelLower.StartsWith("mixtral"))
-        {
-            return _llmProviders.FirstOrDefault(p => p.Provider == Core.Domain.Enums.AiProvider.Groq);
-        }
-
-        // Default to first available provider
-        _logger.LogWarning(
-            "No specific provider match for model {Model}, using first available provider",
-            modelName);
-        return _llmProviders.FirstOrDefault();
+        
+        return provider;
     }
 }

@@ -1,3 +1,5 @@
+using PromptLab.Core.Domain.Enums;
+
 namespace PromptLab.Core.DTOs;
 
 /// <summary>
@@ -5,6 +7,11 @@ namespace PromptLab.Core.DTOs;
 /// </summary>
 public class PreparedPromptRequest
 {
+    /// <summary>
+    /// The AI provider to use
+    /// </summary>
+    public required AiProvider Provider { get; set; }
+
     /// <summary>
     /// The built LLM request ready for provider consumption
     /// </summary>

@@ -1,4 +1,5 @@
 using System.ComponentModel.DataAnnotations;
+using PromptLab.Core.Domain.Enums;
 
 namespace PromptLab.Api.Models;
 
@@ -7,6 +8,12 @@ namespace PromptLab.Api.Models;
 /// </summary>
 public class ExecutePromptRequest
 {
+    /// <summary>
+    /// The AI provider to use (required)
+    /// </summary>
+    [Required(ErrorMessage = "Provider is required")]
+    public AiProvider Provider { get; set; }
+
     /// <summary>
     /// The user's prompt text (required, max 50,000 characters)
     /// </summary>

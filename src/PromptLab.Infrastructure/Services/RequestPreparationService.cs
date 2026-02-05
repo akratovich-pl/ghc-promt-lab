@@ -33,6 +33,7 @@ public class RequestPreparationService : IRequestPreparationService
     }
 
     public async Task<PreparedPromptRequest> PrepareAsync(
+        Core.Domain.Enums.AiProvider provider,
         string prompt,
         string? systemPrompt,
         Guid? conversationId,
@@ -43,7 +44,10 @@ public class RequestPreparationService : IRequestPreparationService
         string userId,
         CancellationToken cancellationToken)
     {
-        var requestModel = model ?? "gemini-1.5-flash";
+        var requestModel = model ?? "gemini-1.5-flash"; // TODO: Get default model from provider config
+
+        _logger.LogInformation("Preparing request for provider {Provider}, model {Model}",
+            provider, requestModel);
 
         // 1. Validate input
         _promptValidator.ValidatePromptRequest(prompt, contextFileIds);
@@ -71,6 +75,7 @@ public class RequestPreparationService : IRequestPreparationService
 
         return new PreparedPromptRequest
         {
+            Provider = provider,
             LlmRequest = llmRequest,
             ContextFileId = contextFileId,
             ConversationHistory = conversationHistory,

@@ -39,6 +39,7 @@ public class PromptExecutionService : IPromptExecutionService
     }
 
     public async Task<PromptExecutionResult> ExecutePromptAsync(
+        AiProvider provider,
         string prompt,
         string? systemPrompt,
         Guid? conversationId,
@@ -52,12 +53,12 @@ public class PromptExecutionService : IPromptExecutionService
         var stopwatch = Stopwatch.StartNew();
         var userId = "system"; // TODO: Get from auth context
 
-        _logger.LogInformation("Starting prompt execution. CorrelationId: {CorrelationId}, UserId: {UserId}",
-            correlationId, userId);
+        _logger.LogInformation("Starting prompt execution. Provider: {Provider}, CorrelationId: {CorrelationId}, UserId: {UserId}",
+            provider, correlationId, userId);
 
         // 1-4. Prepare request (validation, history, enrichment, building)
         var preparedRequest = await _requestPreparationService.PrepareAsync(
-            prompt, systemPrompt, conversationId, contextFileIds, 
+            provider, prompt, systemPrompt, conversationId, contextFileIds, 
             model, maxTokens, temperature, userId, cancellationToken);
 
         // 5. Execute LLM request
