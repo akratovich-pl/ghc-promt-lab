@@ -116,13 +116,13 @@ public class ProviderService : IProviderService
 
         try
         {
-            // Check if API key is configured
-            var apiKeyEnvVar = GetApiKeyEnvironmentVariable(providerName);
-            var apiKey = Environment.GetEnvironmentVariable(apiKeyEnvVar);
+            // Check if API key is configured using IConfiguration
+            // This reads from User Secrets, appsettings.json, and environment variables
+            var apiKey = _configuration.GetValue<string>($"Providers:{providerName}:ApiKey");
 
             if (string.IsNullOrWhiteSpace(apiKey))
             {
-                errorMessage = $"API key not configured (missing {apiKeyEnvVar} environment variable)";
+                errorMessage = "API key not configured";
                 _logger.LogWarning("Provider {ProviderName} unavailable: {ErrorMessage}", providerName, errorMessage);
             }
             else
@@ -191,16 +191,6 @@ public class ProviderService : IProviderService
         {
             "google" => AiProvider.Google,
             "groq" => AiProvider.Groq,
-            _ => throw new NotImplementedException()
-        };
-    }
-
-    private string GetApiKeyEnvironmentVariable(string providerName)
-    {
-        return providerName.ToLower() switch
-        {
-            "google" => "GOOGLE_API_KEY",
-            "groq" => "GROQ_API_KEY",
             _ => throw new NotImplementedException()
         };
     }
