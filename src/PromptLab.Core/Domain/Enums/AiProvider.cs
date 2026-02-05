@@ -5,9 +5,6 @@ namespace PromptLab.Core.Domain.Enums;
 /// </summary>
 public enum AiProvider
 {
-    OpenAI,
-    Anthropic,
-    Google,
-    Groq,
-    Other
+    Google = 1,
+    Groq
 }

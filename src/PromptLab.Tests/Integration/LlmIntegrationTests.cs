@@ -301,14 +301,14 @@ public class LlmIntegrationTests : IClassFixture<CustomWebApplicationFactory>
         var googleResponse = TestDataFactory.CreateTestResponse(
             prompt.Id, 
             provider: PromptLab.Core.Domain.Enums.AiProvider.Google);
-        var openAiResponse = TestDataFactory.CreateTestResponse(
+        var groqResponse = TestDataFactory.CreateTestResponse(
             prompt.Id, 
-            provider: PromptLab.Core.Domain.Enums.AiProvider.OpenAI);
+            provider: PromptLab.Core.Domain.Enums.AiProvider.Groq);
 
         // Act
         dbContext.Conversations.Add(conversation);
         dbContext.Prompts.Add(prompt);
-        dbContext.Responses.AddRange(googleResponse, openAiResponse);
+        dbContext.Responses.AddRange(googleResponse, groqResponse);
         await dbContext.SaveChangesAsync();
 
         // Assert
@@ -318,7 +318,7 @@ public class LlmIntegrationTests : IClassFixture<CustomWebApplicationFactory>
         
         Assert.Equal(2, responses.Count);
         Assert.Contains(responses, r => r.Provider == PromptLab.Core.Domain.Enums.AiProvider.Google);
-        Assert.Contains(responses, r => r.Provider == PromptLab.Core.Domain.Enums.AiProvider.OpenAI);
+        Assert.Contains(responses, r => r.Provider == PromptLab.Core.Domain.Enums.AiProvider.Groq);
     }
 
     #endregion

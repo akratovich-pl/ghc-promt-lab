@@ -37,10 +37,10 @@ public class ProvidersControllerTests
             },
             new ProviderInfo
             {
-                Provider = AiProvider.OpenAI,
-                Name = "OpenAI",
+                Provider = AiProvider.Groq,
+                Name = "Groq",
                 IsAvailable = false,
-                SupportedModels = new List<string> { "gpt-4o", "gpt-3.5-turbo" }
+                SupportedModels = new List<string> { "llama-3.3-70b-versatile", "mixtral-8x7b-32768" }
             }
         };
 
@@ -59,7 +59,7 @@ public class ProvidersControllerTests
         Assert.Equal(2, providers.Count);
         Assert.Equal("Google", providers[0].Name);
         Assert.True(providers[0].IsAvailable);
-        Assert.Equal("OpenAI", providers[1].Name);
+        Assert.Equal("Groq", providers[1].Name);
         Assert.False(providers[1].IsAvailable);
     }
 

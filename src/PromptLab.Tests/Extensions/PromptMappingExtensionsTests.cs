@@ -101,8 +101,8 @@ public class PromptMappingExtensionsTests
             OutputTokens = 250,
             Cost = 0.075m,
             LatencyMs = 2000,
-            Model = "claude-3-opus",
-            Provider = AiProvider.Anthropic,
+            Model = "gemini-1.5-pro",
+            Provider = AiProvider.Google,
             CreatedAt = createdAt
         };
 
@@ -183,8 +183,8 @@ public class PromptMappingExtensionsTests
             OutputTokens = 100,
             Cost = 0.03m,
             LatencyMs = 800,
-            Model = "gpt-3.5-turbo",
-            Provider = AiProvider.OpenAI,
+            Model = "llama-3.3-70b-versatile",
+            Provider = AiProvider.Groq,
             CreatedAt = createdAt
         };
 
@@ -193,8 +193,8 @@ public class PromptMappingExtensionsTests
 
         // Assert
         Assert.Equal(responseId, responseDetail.Id);
-        Assert.Equal("OpenAI", responseDetail.Provider);
-        Assert.Equal("gpt-3.5-turbo", responseDetail.Model);
+        Assert.Equal("Groq", responseDetail.Provider);
+        Assert.Equal("llama-3.3-70b-versatile", responseDetail.Model);
         Assert.Equal("Response detail content", responseDetail.Content);
         Assert.Equal(100, responseDetail.Tokens); // OutputTokens
         Assert.Equal(0.03m, responseDetail.Cost);
@@ -291,7 +291,7 @@ public class PromptMappingExtensionsTests
                 Cost = 0.015m,
                 LatencyMs = 400,
                 Model = "model-2",
-                Provider = AiProvider.Anthropic,
+                Provider = AiProvider.Google,
                 CreatedAt = DateTime.UtcNow
             },
             new PromptExecutionResult
@@ -304,7 +304,7 @@ public class PromptMappingExtensionsTests
                 Cost = 0.02m,
                 LatencyMs = 500,
                 Model = "model-3",
-                Provider = AiProvider.OpenAI,
+                Provider = AiProvider.Groq,
                 CreatedAt = DateTime.UtcNow
             }
         };

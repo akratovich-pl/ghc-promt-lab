@@ -185,15 +185,13 @@ public class ProviderService : IProviderService
         return Task.FromResult(models);
     }
 
-    private AiProvider MapProviderNameToEnum(string providerName)
+    private static AiProvider MapProviderNameToEnum(string providerName)
     {
         return providerName.ToLower() switch
         {
             "google" => AiProvider.Google,
             "groq" => AiProvider.Groq,
-            "openai" => AiProvider.OpenAI,
-            "anthropic" => AiProvider.Anthropic,
-            _ => AiProvider.Other
+            _ => throw new NotImplementedException()
         };
     }
 
@@ -203,9 +201,7 @@ public class ProviderService : IProviderService
         {
             "google" => "GOOGLE_API_KEY",
             "groq" => "GROQ_API_KEY",
-            "openai" => "OPENAI_API_KEY",
-            "anthropic" => "ANTHROPIC_API_KEY",
-            _ => $"{providerName.ToUpper()}_API_KEY"
+            _ => throw new NotImplementedException()
         };
     }
 }

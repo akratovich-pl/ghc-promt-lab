@@ -11,13 +11,13 @@ public class ExecutePromptRequest
     /// The user's prompt text (required, max 50,000 characters)
     /// </summary>
     [Required(ErrorMessage = "Prompt is required")]
-    [StringLength(50000, ErrorMessage = "Prompt cannot exceed 50,000 characters")]
+    [StringLength(5000, ErrorMessage = "Prompt cannot exceed 50,00 characters")]
     public string Prompt { get; set; } = string.Empty;
 
     /// <summary>
     /// Optional system prompt to guide the AI's behavior
     /// </summary>
-    [StringLength(10000, ErrorMessage = "SystemPrompt cannot exceed 10,000 characters")]
+    [StringLength(1000, ErrorMessage = "SystemPrompt cannot exceed 10,00 characters")]
     public string? SystemPrompt { get; set; }
 
     /// <summary>
