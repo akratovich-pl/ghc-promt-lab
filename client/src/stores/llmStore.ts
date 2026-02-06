@@ -29,6 +29,8 @@ export const useLlmStore = defineStore('llm', () => {
   const selectedModel = ref<SelectedModel | null>(null)
   const loading = ref(false)
   const error = ref<string | null>(null)
+  const isApiConnected = ref(false)
+  const isCheckingConnection = ref(false)
 
   // Computed
   const hasSelectedModel = computed(() => selectedModel.value !== null)
@@ -79,19 +81,61 @@ export const useLlmStore = defineStore('llm', () => {
     selectedModel.value = null
   }
 
+  async function checkApiConnection() {
+    if (isCheckingConnection.value) return
+    
+    isCheckingConnection.value = true
+    try {
+      await api.get('/providers')
+      isApiConnected.value = true
+    } catch (err) {
+      isApiConnected.value = false
+      console.warn('API connection check failed:', err)
+    } finally {
+      isCheckingConnection.value = false
+    }
+  }
+
+  // Start periodic connection check
+  let connectionCheckInterval: number | null = null
+  
+  function startConnectionMonitoring() {
+    // Initial check
+    checkApiConnection()
+    
+    // Check every 15 seconds
+    if (connectionCheckInterval === null) {
+      connectionCheckInterval = window.setInterval(() => {
+        checkApiConnection()
+      }, 15000)
+    }
+  }
+
+  function stopConnectionMonitoring() {
+    if (connectionCheckInterval !== null) {
+      clearInterval(connectionCheckInterval)
+      connectionCheckInterval = null
+    }
+  }
+
   return {
     // State
     providers,
     selectedModel,
     loading,
     error,
+    isApiConnected,
+    isCheckingConnection,
     // Computed
     hasSelectedModel,
     availableProviders,
     // Actions
     fetchProviders,
     selectModel,
-    clearSelection
+    clearSelection,
+    checkApiConnection,
+    startConnectionMonitoring,
+    stopConnectionMonitoring
   }
 }, {
   persist: true

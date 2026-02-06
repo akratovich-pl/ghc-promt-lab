@@ -11,7 +11,12 @@
               class="w-12 h-12 rounded-lg"
             />
             <div>
-              <h1 class="text-3xl font-bold text-gray-900">
+              <h1 
+                class="text-3xl font-bold transition-all duration-500"
+                :class="llmStore.isApiConnected 
+                  ? 'app-name-gradient animate-gradient' 
+                  : 'text-gray-400'"
+              >
                 PromptLab
               </h1>
               <p class="text-base text-gray-500 italic">
@@ -168,7 +173,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { gsap } from 'gsap'
 import { useLlmStore } from '@/stores/llmStore'
@@ -207,6 +212,14 @@ onMounted(() => {
     stagger: 0.1,
     ease: 'power2.out'
   })
+  
+  // Start monitoring API connection
+  llmStore.startConnectionMonitoring()
+})
+
+onUnmounted(() => {
+  // Stop monitoring when component is destroyed
+  llmStore.stopConnectionMonitoring()
 })
 
 function changeModel() {
@@ -284,3 +297,31 @@ function loadExecution(execution: PromptExecution) {
   })
 }
 </script>
+
+<style scoped>
+.app-name-gradient {
+  background: linear-gradient(
+    90deg,
+    #10b981 0%,
+    #3b82f6 50%,
+    #10b981 100%
+  );
+  background-size: 200% auto;
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.animate-gradient {
+  animation: gradient-flow 3s ease-in-out infinite;
+}
+
+@keyframes gradient-flow {
+  0%, 100% {
+    background-position: 0% center;
+  }
+  50% {
+    background-position: 100% center;
+  }
+}
+</style>
