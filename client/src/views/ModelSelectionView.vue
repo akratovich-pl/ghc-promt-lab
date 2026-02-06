@@ -24,7 +24,7 @@
         <p>{{ llmStore.error }}</p>
         <button 
           @click="llmStore.fetchProviders()"
-          class="mt-2 px-4 py-2 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-colors shadow-sm"
+          class="mt-2 px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium rounded-lg transition-colors"
         >
           Retry
         </button>
@@ -60,13 +60,13 @@
               :key="model"
               @click="selectModelAndNavigate(provider.name, model)"
               :disabled="selectedProvider === provider.name && selectedModelName === model"
-              class="px-4 py-3 border-2 rounded-lg text-left transition-all font-medium"
+              class="px-5 py-3 border-2 rounded-lg text-left transition-colors font-medium"
               :class="selectedProvider === provider.name && selectedModelName === model 
-                ? 'border-blue-500 bg-blue-500 text-white shadow-md' 
-                : 'border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 text-blue-800 shadow-sm'"
+                ? 'border-blue-400 bg-blue-200 text-blue-900' 
+                : 'border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 text-blue-800'"
             >
-              <div class="font-semibold">{{ model }}</div>
-              <div v-if="selectedProvider === provider.name && selectedModelName === model" class="text-xs mt-1 opacity-90">
+              <div class="font-semibold text-base">{{ model }}</div>
+              <div v-if="selectedProvider === provider.name && selectedModelName === model" class="text-sm mt-1 opacity-90">
                 ✓ Selected
               </div>
             </button>
