@@ -13,7 +13,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   position: 'top',
-  maxWidth: 320
+  maxWidth: 450
 })
 
 const isVisible = ref(false)
@@ -35,6 +35,11 @@ const hide = () => {
   hideTimeout = setTimeout(() => {
     isVisible.value = false
   }, 100)
+}
+
+// Check if URL is external
+const isExternalLink = (url: string) => {
+  return url.startsWith('http://') || url.startsWith('https://')
 }
 
 // Position classes based on prop
@@ -122,6 +127,7 @@ const arrowClasses = computed(() => {
           <!-- Learn More Link (if provided) -->
           <div v-if="content.learnMoreUrl" class="mt-3 pt-3 border-t border-gray-700">
             <a
+              v-if="isExternalLink(content.learnMoreUrl)"
               :href="content.learnMoreUrl"
               target="_blank"
               rel="noopener noreferrer"
@@ -143,6 +149,14 @@ const arrowClasses = computed(() => {
                 />
               </svg>
             </a>
+            <router-link
+              v-else
+              :to="content.learnMoreUrl"
+              class="text-blue-400 hover:text-blue-300 text-xs inline-flex items-center gap-1 pointer-events-auto"
+              @click.stop
+            >
+              📚 Learn more →
+            </router-link>
           </div>
         </div>
       </div>
