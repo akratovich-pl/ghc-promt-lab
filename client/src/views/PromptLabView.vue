@@ -1,43 +1,19 @@
 <template>
   <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50">
     <!-- Header -->
-    <header class="bg-white border-b border-gray-200 shadow-sm">
-      <div class="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8">
-        <div class="flex items-center justify-between">
-          <div class="flex items-center gap-3">
-            <img 
-              src="/logo.png" 
-              alt="PromptLab Logo" 
-              class="w-12 h-12 rounded-lg"
-            />
-            <div>
-              <h1 
-                class="text-3xl font-bold transition-all duration-500"
-                :class="llmStore.isApiConnected 
-                  ? 'app-name-gradient animate-gradient' 
-                  : 'text-gray-400'"
-              >
-                PromptLab
-              </h1>
-              <p class="text-base text-gray-500 italic">
-                Where AI Prompts Come to Life
-              </p>
-            </div>
-          </div>
-          <div class="flex items-center gap-4">
-            <p class="text-sm text-gray-600 font-medium">
-              {{ llmStore.selectedModel?.providerName }} - {{ llmStore.selectedModel?.modelName }}
-            </p>
-            <button
-              @click="changeModel"
-              class="px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium rounded-lg transition-colors"
-            >
-              Change Model
-            </button>
-          </div>
-        </div>
-      </div>
-    </header>
+    <AppHeader :use-animation="true">
+      <template #navigation>
+        <p class="text-sm text-gray-600 font-medium">
+          {{ llmStore.selectedModel?.providerName }} - {{ llmStore.selectedModel?.modelName }}
+        </p>
+        <button
+          @click="changeModel"
+          class="px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium rounded-lg transition-colors"
+        >
+          Change Model
+        </button>
+      </template>
+    </AppHeader>
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
@@ -191,6 +167,7 @@ import { useMetricsStore } from '@/stores/metricsStore'
 import { mapProviderNameToEnum } from '@/utils/providerMapper'
 import * as apiService from '@/services/api'
 import type { PromptExecution } from '@/stores/promptStore'
+import AppHeader from '@/components/common/AppHeader.vue'
 
 // Constants
 const CHARS_PER_TOKEN = 4 // Rough approximation for token calculation
@@ -319,29 +296,5 @@ function loadExecution(execution: PromptExecution) {
 </script>
 
 <style scoped>
-.app-name-gradient {
-  background: linear-gradient(
-    90deg,
-    #10b981 0%,
-    #3b82f6 50%,
-    #10b981 100%
-  );
-  background-size: 200% auto;
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  background-clip: text;
-}
-
-.animate-gradient {
-  animation: gradient-flow 3s ease-in-out infinite;
-}
-
-@keyframes gradient-flow {
-  0%, 100% {
-    background-position: 0% center;
-  }
-  50% {
-    background-position: 100% center;
-  }
-}
+/* No additional styles needed - gradient animation moved to AppHeader component */
 </style>

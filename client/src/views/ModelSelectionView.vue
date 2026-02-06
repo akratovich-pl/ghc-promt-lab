@@ -1,15 +1,22 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50 py-12 px-4">
-    <div class="max-w-4xl mx-auto">
-      <!-- Header -->
+  <div class="min-h-screen bg-gradient-to-br from-blue-50 via-white to-gray-50">
+    <!-- Header -->
+    <AppHeader 
+      tagline="Choose your AI provider and model to get started" 
+      :use-animation="true"
+    >
+      <template #navigation>
+        <!-- Empty navigation for model selection page -->
+      </template>
+    </AppHeader>
+
+    <div class="max-w-4xl mx-auto px-4 py-12">
+      <!-- Main Title -->
       <div class="text-center mb-12">
         <div class="text-6xl mb-4">🤖</div>
-        <h1 class="text-4xl font-bold text-gray-900 mb-2">
+        <h2 class="text-4xl font-bold text-gray-900 mb-2">
           Select AI Model
-        </h1>
-        <p class="text-lg text-gray-600">
-          Choose your preferred AI provider and model to get started
-        </p>
+        </h2>
       </div>
 
       <!-- Loading State -->
@@ -90,6 +97,7 @@
 import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLlmStore } from '@/stores/llmStore'
+import AppHeader from '@/components/common/AppHeader.vue'
 
 const router = useRouter()
 const llmStore = useLlmStore()

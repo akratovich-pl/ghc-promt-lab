@@ -20,14 +20,14 @@ const router = createRouter({
       meta: { requiresModel: true }
     },
     {
+      path: '/about',
+      name: 'about',
+      component: () => import('@/views/AboutView.vue')
+    },
+    {
       path: '/demo',
       name: 'demo',
       component: () => import('@/views/HomeView.vue')
-    },
-    {
-      path: '/lab',
-      name: 'prompt-lab',
-      component: () => import('@/views/PromptLabView.vue')
     }
   ]
 })
