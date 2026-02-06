@@ -4,23 +4,32 @@
     <header class="bg-white border-b border-gray-200 shadow-sm">
       <div class="max-w-7xl mx-auto px-4 py-5 sm:px-6 lg:px-8">
         <div class="flex items-center justify-between">
-          <div class="flex items-center space-x-4">
-            <div class="text-4xl">🧪</div>
+          <div class="flex items-center gap-3">
+            <img 
+              src="/logo.png" 
+              alt="PromptLab Logo" 
+              class="w-12 h-12 rounded-lg"
+            />
             <div>
               <h1 class="text-3xl font-bold text-gray-900">
                 PromptLab
               </h1>
-              <p class="text-sm text-gray-600 font-medium">
-                {{ llmStore.selectedModel?.providerName }} - {{ llmStore.selectedModel?.modelName }}
+              <p class="text-base text-gray-500 italic">
+                Where AI Prompts Come to Life
               </p>
             </div>
           </div>
-          <button
-            @click="changeModel"
-            class="px-5 py-2.5 bg-blue-500 hover:bg-blue-600 text-white font-medium rounded-lg transition-all shadow-sm hover:shadow-md"
-          >
-            Change Model
-          </button>
+          <div class="flex items-center gap-4">
+            <p class="text-sm text-gray-600 font-medium">
+              {{ llmStore.selectedModel?.providerName }} - {{ llmStore.selectedModel?.modelName }}
+            </p>
+            <button
+              @click="changeModel"
+              class="px-5 py-2.5 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium rounded-lg transition-colors"
+            >
+              Change Model
+            </button>
+          </div>
         </div>
       </div>
     </header>
@@ -42,7 +51,7 @@
               v-model="promptStore.currentPrompt"
               placeholder="Enter your prompt here..."
               rows="8"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-primary-500 bg-white text-gray-900 placeholder-gray-400 resize-none"
+              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none bg-white text-gray-900 placeholder-gray-400 resize-none transition-colors"
             ></textarea>
             <div class="mt-4 flex items-center justify-between">
               <div class="text-sm text-gray-600 font-medium">
@@ -51,7 +60,7 @@
               <button
                 @click="executePrompt"
                 :disabled="!promptStore.currentPrompt.trim() || promptStore.isExecuting"
-                class="px-6 py-3 bg-blue-500 hover:bg-blue-600 disabled:bg-blue-300 disabled:cursor-not-allowed text-white font-semibold rounded-lg transition-all shadow-sm hover:shadow-md"
+                class="px-6 py-3 bg-blue-100 hover:bg-blue-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-blue-800 font-semibold rounded-lg transition-colors"
               >
                 {{ promptStore.isExecuting ? 'Executing...' : 'Execute' }}
               </button>
@@ -113,7 +122,7 @@
               <div class="flex justify-between items-center py-2">
                 <span class="text-gray-700 font-medium">Avg Time</span>
                 <span class="font-bold text-gray-900 text-lg">
-                  {{ metricsStore.averageExecutionTime.toFixed(0) }}ms
+                  {{ (metricsStore.averageExecutionTime / 1000).toFixed(2) }}s
                 </span>
               </div>
             </div>
@@ -128,7 +137,7 @@
               <button
                 v-if="promptStore.hasHistory"
                 @click="promptStore.clearHistory"
-                class="text-sm px-3 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium rounded transition-colors"
+                class="text-sm px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium rounded-lg transition-colors"
               >
                 Clear
               </button>
