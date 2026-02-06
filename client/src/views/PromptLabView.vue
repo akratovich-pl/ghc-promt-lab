@@ -35,9 +35,17 @@
               class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none bg-white text-gray-900 placeholder-gray-400 resize-none transition-colors"
             ></textarea>
             <div class="mt-4 flex items-center justify-between">
-              <div class="text-sm text-gray-600 font-medium">
-                Characters: {{ promptStore.currentPrompt.length }}
-              </div>
+              <AppTooltip
+                :content="getConceptTooltip('tokens')"
+                position="top"
+              >
+                <div class="text-sm text-gray-600 font-medium cursor-help inline-flex items-center gap-1">
+                  Characters: {{ promptStore.currentPrompt.length }}
+                  <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                </div>
+              </AppTooltip>
               <button
                 @click="executePrompt"
                 :disabled="!promptStore.currentPrompt.trim() || promptStore.isExecuting"
@@ -91,13 +99,33 @@
             </h2>
             <div class="space-y-4">
               <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                <span class="text-gray-700 font-medium">Total Executions</span>
+                <span class="text-gray-700 font-medium inline-flex items-center gap-1">
+                  Total Executions
+                  <AppTooltip
+                    :content="getConceptTooltip('prompt')"
+                    position="top"
+                  >
+                    <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </AppTooltip>
+                </span>
                 <span class="font-bold text-gray-900 text-lg">
                   {{ metricsStore.totalExecutions }}
                 </span>
               </div>
               <div class="flex justify-between items-center py-2 border-b border-gray-100">
-                <span class="text-gray-700 font-medium">Total Tokens</span>
+                <span class="text-gray-700 font-medium inline-flex items-center gap-1">
+                  Total Tokens
+                  <AppTooltip
+                    :content="getConceptTooltip('tokens')"
+                    position="top"
+                  >
+                    <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </AppTooltip>
+                </span>
                 <span class="font-bold text-gray-900 text-lg">
                   {{ metricsStore.totalTokensUsed.toLocaleString() }}
                 </span>
@@ -109,7 +137,17 @@
                 </span>
               </div>
               <div class="flex justify-between items-center py-2">
-                <span class="text-gray-700 font-medium">Avg Time</span>
+                <span class="text-gray-700 font-medium inline-flex items-center gap-1">
+                  Avg Time
+                  <AppTooltip
+                    :content="getConceptTooltip('latency')"
+                    position="top"
+                  >
+                    <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                  </AppTooltip>
+                </span>
                 <span class="font-bold text-gray-900 text-lg">
                   {{ (metricsStore.averageExecutionTime / 1000).toFixed(2) }}s
                 </span>
@@ -157,7 +195,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted, computed } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { gsap } from 'gsap'
 import { useLlmStore } from '@/stores/llmStore'
@@ -167,13 +205,15 @@ import { mapProviderNameToEnum } from '@/utils/providerMapper'
 import * as apiService from '@/services/api'
 import type { PromptExecution } from '@/stores/promptStore'
 import AppHeader from '@/components/common/AppHeader.vue'
+import AppTooltip from '@/components/common/AppTooltip.vue'
 import { useMarkdown } from '@/composables/useMarkdown'
+import { useTooltip } from '@/composables/useTooltip'
 
 // Constants
-const CHARS_PER_TOKEN = 4 // Rough approximation for token calculation
 const HISTORY_TRUNCATE_LENGTH = 60
 
 const { renderMarkdown } = useMarkdown()
+const { getTooltipContent } = useTooltip()
 
 const router = useRouter()
 const llmStore = useLlmStore()
@@ -218,18 +258,19 @@ function clearResponse() {
   promptStore.setResponse('')
   
   // Subtle fade animation
-  gsap.from(responseCard.value, {
-    opacity: 0,
-    duration: 0.2,
-    ease: 'power2.out'
-  })
+  if (responseCard.value) {
+    gsap.from(responseCard.value, {
+      opacity: 0,
+      duration: 0.2,
+      ease: 'power2.out'
+    })
+  }
 }
 
 async function executePrompt() {
   if (!promptStore.currentPrompt.trim() || !llmStore.selectedModel) return
 
   promptStore.setExecuting(true)
-  const startTime = Date.now()
   
   try {
     // Map provider name to enum
@@ -241,8 +282,6 @@ async function executePrompt() {
       prompt: promptStore.currentPrompt,
       model: llmStore.selectedModel.modelName
     })
-    
-    const executionTime = Date.now() - startTime
     
     // Update stores with real data
     promptStore.setResponse(response.data.content)
@@ -263,12 +302,14 @@ async function executePrompt() {
     })
     
     // Animate response card
-    gsap.from(responseCard.value, {
-      scale: 0.98,
-      opacity: 0,
-      duration: 0.3,
-      ease: 'power2.out'
-    })
+    if (responseCard.value) {
+      gsap.from(responseCard.value, {
+        scale: 0.98,
+        opacity: 0,
+        duration: 0.3,
+        ease: 'power2.out'
+      })
+    }
   } catch (error: any) {
     const errorMessage = error.response?.data?.detail || error.message || 'Unknown error occurred'
     promptStore.setResponse('')
@@ -294,6 +335,11 @@ function loadExecution(execution: PromptExecution) {
     duration: 0.3,
     ease: 'power2.out'
   })
+}
+
+// Get tooltip for concepts
+function getConceptTooltip(key: string) {
+  return getTooltipContent('concepts', key)
 }
 </script>
 

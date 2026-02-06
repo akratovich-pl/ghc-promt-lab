@@ -34,15 +34,14 @@
       </router-link>
     </div>
 
-        <!-- Input and Output in 2-column layout on larger screens -->
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <InputBlock />
-          <OutputBlock />
-        </div>
-      </div>
+    <!-- Input and Output in 2-column layout on larger screens -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <InputBlock />
+      <OutputBlock />
+    </div>
 
-      <!-- Footer with status indicators -->
-      <div class="mt-8 text-center">
+    <!-- Footer with status indicators -->
+    <div class="mt-8 text-center">
         <div class="flex gap-3 justify-center flex-wrap">
           <div class="px-3 py-1.5 bg-green-100 border border-green-200 rounded-lg text-sm">
             <span class="text-green-800">✓ Vue 3</span>

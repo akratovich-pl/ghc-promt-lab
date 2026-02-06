@@ -26,7 +26,7 @@
           About PromptLab
         </h2>
         <p class="text-sm text-gray-500 font-medium mb-6">
-          Version 1.0.0
+          Version 1.1.0
         </p>
         <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
           An interactive learning platform designed to help beginners understand how prompts 
