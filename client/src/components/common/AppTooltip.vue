@@ -13,7 +13,7 @@ interface Props {
 
 const props = withDefaults(defineProps<Props>(), {
   position: 'top',
-  maxWidth: 450
+  maxWidth: 320
 })
 
 const isVisible = ref(false)
@@ -44,35 +44,35 @@ const isExternalLink = (url: string) => {
 
 // Position classes based on prop
 const positionClasses = computed(() => {
-  const base = 'absolute z-50'
+  const base = 'absolute z-[9999]'
   switch (props.position) {
     case 'top':
-      return `${base} bottom-full left-1/2 -translate-x-1/2 mb-2`
+      return `${base} bottom-full left-0 mb-2`
     case 'bottom':
-      return `${base} top-full left-1/2 -translate-x-1/2 mt-2`
+      return `${base} top-full left-0 mt-2`
     case 'left':
-      return `${base} right-full top-1/2 -translate-y-1/2 mr-2`
+      return `${base} right-full top-0 mr-2`
     case 'right':
-      return `${base} left-full top-1/2 -translate-y-1/2 ml-2`
+      return `${base} left-full top-0 ml-2`
     default:
-      return `${base} bottom-full left-1/2 -translate-x-1/2 mb-2`
+      return `${base} bottom-full left-0 mb-2`
   }
 })
 
 // Arrow classes based on position
 const arrowClasses = computed(() => {
-  const base = 'absolute w-2 h-2 bg-gray-900 transform rotate-45'
+  const base = 'absolute w-3 h-3 bg-gray-800 transform rotate-45'
   switch (props.position) {
     case 'top':
-      return `${base} top-full left-1/2 -translate-x-1/2 -mt-1`
+      return `${base} top-full left-4 -mt-1.5`
     case 'bottom':
-      return `${base} bottom-full left-1/2 -translate-x-1/2 -mb-1`
+      return `${base} bottom-full left-4 -mb-1.5`
     case 'left':
-      return `${base} left-full top-1/2 -translate-y-1/2 -ml-1`
+      return `${base} left-full top-4 -ml-1.5`
     case 'right':
-      return `${base} right-full top-1/2 -translate-y-1/2 -mr-1`
+      return `${base} right-full top-4 -mr-1.5`
     default:
-      return `${base} top-full left-1/2 -translate-x-1/2 -mt-1`
+      return `${base} top-full left-4 -mt-1.5`
   }
 })
 </script>
@@ -95,20 +95,20 @@ const arrowClasses = computed(() => {
         v-if="isVisible && content"
         ref="tooltipRef"
         :class="positionClasses"
-        :style="{ maxWidth: `${maxWidth}px` }"
-        class="pointer-events-none"
+        :style="{ maxWidth: `${maxWidth}px`, minWidth: '200px' }"
+        class="pointer-events-auto"
         role="tooltip"
       >
         <!-- Arrow -->
         <div :class="arrowClasses"></div>
 
         <!-- Tooltip content -->
-        <div class="bg-gray-900 text-white text-sm rounded-lg shadow-xl p-4">
+        <div class="bg-gray-800 text-white text-sm rounded-xl shadow-2xl p-4 border border-gray-700">
           <!-- Title -->
-          <div class="font-semibold mb-2">{{ content.title }}</div>
+          <div class="font-semibold mb-2 text-base">{{ content.title }}</div>
 
           <!-- Description -->
-          <div class="text-gray-200 leading-relaxed mb-2">
+          <div class="text-gray-100 leading-relaxed">
             {{ content.description }}
           </div>
 
@@ -125,16 +125,17 @@ const arrowClasses = computed(() => {
           </div>
 
           <!-- Learn More Link (if provided) -->
-          <div v-if="content.learnMoreUrl" class="mt-3 pt-3 border-t border-gray-700">
+          <div v-if="content.learnMoreUrl" class="mt-3 pt-3 border-t border-gray-600">
             <a
               v-if="isExternalLink(content.learnMoreUrl)"
               :href="content.learnMoreUrl"
               target="_blank"
               rel="noopener noreferrer"
-              class="text-blue-400 hover:text-blue-300 text-xs inline-flex items-center gap-1 pointer-events-auto"
+              class="text-blue-300 hover:text-blue-200 text-xs inline-flex items-center gap-1.5 font-medium transition-colors"
               @click.stop
             >
-              📚 Learn more
+              <span>📖</span>
+              <span>Learn more</span>
               <svg
                 class="w-3 h-3"
                 fill="none"
@@ -152,10 +153,12 @@ const arrowClasses = computed(() => {
             <router-link
               v-else
               :to="content.learnMoreUrl"
-              class="text-blue-400 hover:text-blue-300 text-xs inline-flex items-center gap-1 pointer-events-auto"
+              class="text-blue-300 hover:text-blue-200 text-xs inline-flex items-center gap-1.5 font-medium transition-colors"
               @click.stop
             >
-              📚 Learn more →
+              <span>📖</span>
+              <span>Learn more</span>
+              <span>→</span>
             </router-link>
           </div>
         </div>

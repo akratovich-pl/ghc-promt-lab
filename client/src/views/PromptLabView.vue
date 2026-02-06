@@ -98,60 +98,60 @@
               Metrics
             </h2>
             <div class="space-y-4">
-              <AppTooltip
-                :content="getConceptTooltip('prompt')"
-                position="left"
-              >
-                <div class="flex justify-between items-center py-2 border-b border-gray-100 cursor-help">
-                  <span class="text-gray-700 font-medium inline-flex items-center gap-1">
-                    Total Executions
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-gray-700 font-medium inline-flex items-center gap-1">
+                  Total Executions
+                  <AppTooltip
+                    :content="getConceptTooltip('prompt')"
+                    position="top"
+                  >
+                    <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                  </span>
-                  <span class="font-bold text-gray-900 text-lg">
-                    {{ metricsStore.totalExecutions }}
-                  </span>
-                </div>
-              </AppTooltip>
-              <AppTooltip
-                :content="getConceptTooltip('tokens')"
-                position="left"
-              >
-                <div class="flex justify-between items-center py-2 border-b border-gray-100 cursor-help">
-                  <span class="text-gray-700 font-medium inline-flex items-center gap-1">
-                    Total Tokens
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  </AppTooltip>
+                </span>
+                <span class="font-bold text-gray-900 text-lg">
+                  {{ metricsStore.totalExecutions }}
+                </span>
+              </div>
+              <div class="flex justify-between items-center py-2 border-b border-gray-100">
+                <span class="text-gray-700 font-medium inline-flex items-center gap-1">
+                  Total Tokens
+                  <AppTooltip
+                    :content="getConceptTooltip('tokens')"
+                    position="top"
+                  >
+                    <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                  </span>
-                  <span class="font-bold text-gray-900 text-lg">
-                    {{ metricsStore.totalTokensUsed.toLocaleString() }}
-                  </span>
-                </div>
-              </AppTooltip>
+                  </AppTooltip>
+                </span>
+                <span class="font-bold text-gray-900 text-lg">
+                  {{ metricsStore.totalTokensUsed.toLocaleString() }}
+                </span>
+              </div>
               <div class="flex justify-between items-center py-2 border-b border-gray-100">
                 <span class="text-gray-700 font-medium">Total Cost</span>
                 <span class="font-bold text-accent-green text-lg">
                   ${{ metricsStore.totalCost.toFixed(4) }}
                 </span>
               </div>
-              <AppTooltip
-                :content="getConceptTooltip('latency')"
-                position="left"
-              >
-                <div class="flex justify-between items-center py-2 cursor-help">
-                  <span class="text-gray-700 font-medium inline-flex items-center gap-1">
-                    Avg Time
-                    <svg class="w-4 h-4 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <div class="flex justify-between items-center py-2">
+                <span class="text-gray-700 font-medium inline-flex items-center gap-1">
+                  Avg Time
+                  <AppTooltip
+                    :content="getConceptTooltip('latency')"
+                    position="top"
+                  >
+                    <svg class="w-4 h-4 text-gray-400 cursor-help" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                     </svg>
-                  </span>
-                  <span class="font-bold text-gray-900 text-lg">
-                    {{ (metricsStore.averageExecutionTime / 1000).toFixed(2) }}s
-                  </span>
-                </div>
-              </AppTooltip>
+                  </AppTooltip>
+                </span>
+                <span class="font-bold text-gray-900 text-lg">
+                  {{ (metricsStore.averageExecutionTime / 1000).toFixed(2) }}s
+                </span>
+              </div>
             </div>
           </div>
 
