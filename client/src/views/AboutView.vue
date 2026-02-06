@@ -25,6 +25,9 @@
         <h2 class="text-5xl font-bold text-gray-900 mb-4">
           About PromptLab
         </h2>
+        <p class="text-sm text-gray-500 font-medium mb-6">
+          Version 1.0.0
+        </p>
         <p class="text-xl text-gray-600 max-w-3xl mx-auto leading-relaxed">
           An interactive learning platform designed to help beginners understand how prompts 
           and Large Language Models (LLMs) work, and improve the quality of daily AI conversations.
@@ -32,27 +35,27 @@
       </section>
 
       <!-- Mission Section -->
-      <section class="mb-16 bg-white rounded-xl shadow-md p-8 border border-gray-200">
-        <h3 class="text-3xl font-bold text-gray-900 mb-4 flex items-center gap-3">
-          <span>🎯</span>
+      <section class="mb-16">
+        <h3 class="text-3xl font-bold text-gray-900 mb-6">
           Our Mission
         </h3>
-        <p class="text-lg text-gray-700 leading-relaxed mb-4">
-          PromptLab empowers users to master the art of AI interaction through hands-on experimentation 
-          and real-time feedback. Whether you're new to AI or looking to refine your prompting skills, 
-          our platform provides the tools and insights you need to communicate effectively with AI models.
-        </p>
-        <p class="text-lg text-gray-700 leading-relaxed">
-          We believe that understanding how LLMs work and learning to craft effective prompts are 
-          essential skills in the AI era. PromptLab makes this learning process intuitive, 
-          engaging, and immediately applicable.
-        </p>
+        <div class="bg-white rounded-xl shadow-md p-8 border border-gray-200">
+          <p class="text-lg text-gray-700 leading-relaxed mb-4">
+            PromptLab empowers users to master the art of AI interaction through hands-on experimentation 
+            and real-time feedback. Whether you're new to AI or looking to refine your prompting skills, 
+            our platform provides the tools and insights you need to communicate effectively with AI models.
+          </p>
+          <p class="text-lg text-gray-700 leading-relaxed">
+            We believe that understanding how LLMs work and learning to craft effective prompts are 
+            essential skills in the AI era. PromptLab makes this learning process intuitive, 
+            engaging, and immediately applicable.
+          </p>
+        </div>
       </section>
 
       <!-- Current Features -->
       <section class="mb-16">
-        <h3 class="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-          <span>✅</span>
+        <h3 class="text-3xl font-bold text-gray-900 mb-6">
           Current Features
         </h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -104,12 +107,12 @@
 
           <!-- Feature Card 5 -->
           <div class="bg-white rounded-lg shadow-md p-6 border border-gray-200 hover:shadow-lg transition-shadow">
-            <div class="text-4xl mb-3">🎨</div>
+            <div class="text-4xl mb-3">📝</div>
             <h4 class="text-xl font-semibold text-gray-900 mb-2">
-              Clean, Modern UI
+              Markdown Rendering
             </h4>
             <p class="text-gray-600">
-              Intuitive interface with light theme design optimized for readability and ease of use.
+              LLM responses display with beautiful markdown formatting, syntax-highlighted code blocks, and styled elements for enhanced readability.
             </p>
           </div>
 
@@ -128,8 +131,7 @@
 
       <!-- Upcoming Features -->
       <section class="mb-16">
-        <h3 class="text-3xl font-bold text-gray-900 mb-6 flex items-center gap-3">
-          <span>🚀</span>
+        <h3 class="text-3xl font-bold text-gray-900 mb-6">
           Upcoming Features
         </h3>
         <div class="space-y-4">
