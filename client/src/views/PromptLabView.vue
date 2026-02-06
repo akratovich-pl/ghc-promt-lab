@@ -72,9 +72,18 @@
             ref="responseCard"
             class="bg-white rounded-xl shadow-md border border-gray-200 p-6"
           >
-            <h2 class="text-xl font-semibold text-gray-900 mb-4">
-              Response
-            </h2>
+            <div class="flex justify-between items-center mb-4">
+              <h2 class="text-xl font-semibold text-gray-900">
+                Response
+              </h2>
+              <button
+                v-if="promptStore.currentResponse"
+                @click="clearResponse"
+                class="text-sm px-4 py-2 bg-blue-100 hover:bg-blue-200 text-blue-800 font-medium rounded-lg transition-colors"
+              >
+                Clear
+              </button>
+            </div>
             <div 
               v-if="promptStore.currentResponse"
               class="prose max-w-none p-4 bg-gray-50 rounded-lg min-h-[200px] text-gray-900 border border-gray-200"
@@ -211,6 +220,17 @@ onMounted(() => {
 
 function changeModel() {
   router.push({ name: 'model-selection' })
+}
+
+function clearResponse() {
+  promptStore.setResponse('')
+  
+  // Subtle fade animation
+  gsap.from(responseCard.value, {
+    opacity: 0,
+    duration: 0.2,
+    ease: 'power2.out'
+  })
 }
 
 async function executePrompt() {
