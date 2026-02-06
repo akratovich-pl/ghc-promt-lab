@@ -62,21 +62,27 @@
 
           <!-- Model Selection -->
           <div class="grid grid-cols-1 md:grid-cols-2 gap-3">
-            <button
+            <AppTooltip
               v-for="model in provider.supportedModels"
               :key="model"
-              @click="selectModelAndNavigate(provider.name, model)"
-              :disabled="selectedProvider === provider.name && selectedModelName === model"
-              class="px-5 py-3 border-2 rounded-lg text-left transition-colors font-medium"
-              :class="selectedProvider === provider.name && selectedModelName === model 
-                ? 'border-blue-400 bg-blue-200 text-blue-900' 
-                : 'border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 text-blue-800'"
+              :content="getModelTooltip(model)"
+              position="top"
+              :max-width="400"
             >
-              <div class="font-semibold text-base">{{ model }}</div>
-              <div v-if="selectedProvider === provider.name && selectedModelName === model" class="text-sm mt-1 opacity-90">
-                ✓ Selected
-              </div>
-            </button>
+              <button
+                @click="selectModelAndNavigate(provider.name, model)"
+                :disabled="selectedProvider === provider.name && selectedModelName === model"
+                class="px-5 py-3 border-2 rounded-lg text-left transition-colors font-medium w-full"
+                :class="selectedProvider === provider.name && selectedModelName === model 
+                  ? 'border-blue-400 bg-blue-200 text-blue-900' 
+                  : 'border-blue-300 bg-blue-50 hover:bg-blue-100 hover:border-blue-400 text-blue-800'"
+              >
+                <div class="font-semibold text-base">{{ model }}</div>
+                <div v-if="selectedProvider === provider.name && selectedModelName === model" class="text-sm mt-1 opacity-90">
+                  ✓ Selected
+                </div>
+              </button>
+            </AppTooltip>
           </div>
         </div>
 
@@ -98,6 +104,10 @@ import { ref, onMounted } from 'vue'
 import { useRouter } from 'vue-router'
 import { useLlmStore } from '@/stores/llmStore'
 import AppHeader from '@/components/common/AppHeader.vue'
+import AppTooltip from '@/components/common/AppTooltip.vue'
+import { useTooltip } from '@/composables/useTooltip'
+
+const { getTooltipContent } = useTooltip()
 
 const router = useRouter()
 const llmStore = useLlmStore()
@@ -123,5 +133,10 @@ async function selectModelAndNavigate(providerName: string, modelName: string) {
   
   // Navigate to the main prompt lab
   router.push({ name: 'prompt-lab' })
+}
+
+// Get tooltip for model
+function getModelTooltip(modelName: string) {
+  return getTooltipContent('models', modelName)
 }
 </script>
