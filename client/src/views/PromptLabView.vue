@@ -67,10 +67,9 @@
             </div>
             <div 
               v-if="promptStore.currentResponse"
-              class="prose max-w-none p-4 bg-gray-50 rounded-lg min-h-[200px] text-gray-900 border border-gray-200"
-            >
-              {{ promptStore.currentResponse }}
-            </div>
+              class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-lg min-h-[200px] text-gray-900 border border-gray-200 markdown-response"
+              v-html="renderMarkdown(promptStore.currentResponse)"
+            ></div>
             <div 
               v-else
               class="text-gray-500 italic p-4 bg-gray-50 rounded-lg min-h-[200px] flex items-center justify-center border border-gray-200"
@@ -168,10 +167,13 @@ import { mapProviderNameToEnum } from '@/utils/providerMapper'
 import * as apiService from '@/services/api'
 import type { PromptExecution } from '@/stores/promptStore'
 import AppHeader from '@/components/common/AppHeader.vue'
+import { useMarkdown } from '@/composables/useMarkdown'
 
 // Constants
 const CHARS_PER_TOKEN = 4 // Rough approximation for token calculation
 const HISTORY_TRUNCATE_LENGTH = 60
+
+const { renderMarkdown } = useMarkdown()
 
 const router = useRouter()
 const llmStore = useLlmStore()
