@@ -6,7 +6,12 @@
       :use-animation="true"
     >
       <template #navigation>
-        <!-- Empty navigation for About page -->
+        <router-link
+          to="/glossary"
+          class="inline-flex items-center gap-2 px-4 py-2 bg-white text-gray-700 rounded-lg hover:bg-gray-50 transition-colors duration-200 border border-gray-300 shadow-sm"
+        >
+          📚 Glossary
+        </router-link>
       </template>
     </AppHeader>
 
