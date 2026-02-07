@@ -30,10 +30,11 @@ public class ProviderService : IProviderService
 
     public async Task<List<ProviderInfo>> GetProvidersAsync(CancellationToken cancellationToken = default)
     {
-        var providers = new List<ProviderInfo>();
         var providersConfig = _configuration.GetSection(ProvidersConfiguration.SectionName);
+        var providerSections = providersConfig.GetChildren().ToList();
 
-        foreach (var providerSection in providersConfig.GetChildren())
+        // Fetch all providers in parallel to reduce total response time
+        var providerTasks = providerSections.Select(async providerSection =>
         {
             var providerName = providerSection.Key;
             var providerSettings = new ProviderSettings();
@@ -81,22 +82,23 @@ public class ProviderService : IProviderService
                 }
             }
 
-            providers.Add(new ProviderInfo
-            {
-                Provider = providerEnum,
-                Name = providerSettings.Name,
-                IsAvailable = isAvailable,
-                SupportedModels = supportedModels
-            });
-
             _logger.LogInformation(
                 "Provider {ProviderName} loaded with {ModelCount} models, available: {IsAvailable}",
                 providerName,
                 supportedModels.Count,
                 isAvailable);
-        }
 
-        return providers;
+            return new ProviderInfo
+            {
+                Provider = providerEnum,
+                Name = providerSettings.Name,
+                IsAvailable = isAvailable,
+                SupportedModels = supportedModels
+            };
+        });
+
+        var providers = await Task.WhenAll(providerTasks);
+        return providers.ToList();
     }
 
     public async Task<ProviderStatus> GetProviderStatusAsync(
