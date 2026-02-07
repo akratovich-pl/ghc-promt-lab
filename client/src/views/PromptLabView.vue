@@ -17,6 +17,36 @@
 
     <!-- Main Content -->
     <main class="max-w-7xl mx-auto px-4 py-8 sm:px-6 lg:px-8">
+      <!-- API Connection Status Banner -->
+      <div 
+        v-if="!llmStore.isApiConnected"
+        class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-md"
+      >
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div class="ml-3 flex-1">
+            <h3 class="text-sm font-semibold text-red-800">
+              Backend API Unavailable
+            </h3>
+            <div class="mt-2 text-sm text-red-700">
+              <p>The backend service is currently unavailable. Please check that:</p>
+              <ul class="list-disc list-inside mt-1 ml-2 space-y-1">
+                <li>The API server is running</li>
+                <li>The server is accessible at the configured endpoint</li>
+                <li>Your network connection is active</li>
+              </ul>
+              <p class="mt-2 text-xs text-red-600">
+                Automatically checking connection every 15 seconds...
+              </p>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <!-- Left Column: Prompt Input -->
         <div class="lg:col-span-2 space-y-6">
@@ -24,16 +54,34 @@
           <div 
             ref="promptCard"
             class="bg-white rounded-xl shadow-md border border-gray-200 p-6"
+            :class="{ 'opacity-60': !llmStore.isApiConnected }"
           >
             <h2 class="text-xl font-semibold text-gray-900 mb-4">
               Prompt Input
             </h2>
-            <textarea
-              v-model="promptStore.currentPrompt"
-              placeholder="Enter your prompt here..."
-              rows="8"
-              class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none bg-white text-gray-900 placeholder-gray-400 resize-none transition-colors"
-            ></textarea>
+            <div class="relative">
+              <textarea
+                v-model="promptStore.currentPrompt"
+                :disabled="!llmStore.isApiConnected"
+                placeholder="Enter your prompt here..."
+                rows="8"
+                class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-200 focus:border-blue-400 focus:outline-none bg-white text-gray-900 placeholder-gray-400 resize-none transition-colors disabled:bg-gray-100 disabled:cursor-not-allowed"
+              ></textarea>
+              <!-- Overlay message when API is disconnected -->
+              <div
+                v-if="!llmStore.isApiConnected"
+                class="absolute inset-0 flex items-center justify-center bg-gray-50 bg-opacity-90 rounded-lg pointer-events-none"
+              >
+                <div class="text-center px-4">
+                  <svg class="w-12 h-12 text-gray-400 mx-auto mb-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M18.364 5.636a9 9 0 010 12.728m0 0l-2.829-2.829m2.829 2.829L21 21M15.536 8.464a5 5 0 010 7.072m0 0l-2.829-2.829m-4.243 2.829a4.978 4.978 0 01-1.414-2.83m-1.414 5.658a9 9 0 01-2.167-9.238m7.824 2.167a1 1 0 111.414 1.414m-1.414-1.414L3 3m8.293 8.293l1.414 1.414" />
+                  </svg>
+                  <p class="text-gray-600 font-medium">
+                    API connection required
+                  </p>
+                </div>
+              </div>
+            </div>
             <div class="mt-4 flex items-center justify-between">
               <AppTooltip
                 :content="getConceptTooltip('tokens')"
@@ -48,10 +96,11 @@
               </AppTooltip>
               <button
                 @click="executePrompt"
-                :disabled="!promptStore.currentPrompt.trim() || promptStore.isExecuting"
+                :disabled="!llmStore.isApiConnected || !promptStore.currentPrompt.trim() || promptStore.isExecuting"
+                :title="!llmStore.isApiConnected ? 'Backend API is unavailable' : ''"
                 class="px-6 py-3 bg-blue-100 hover:bg-blue-200 disabled:bg-gray-200 disabled:text-gray-400 disabled:cursor-not-allowed text-blue-800 font-semibold rounded-lg transition-colors"
               >
-                {{ promptStore.isExecuting ? 'Executing...' : 'Execute' }}
+                {{ !llmStore.isApiConnected ? 'API Unavailable' : (promptStore.isExecuting ? 'Executing...' : 'Execute') }}
               </button>
             </div>
           </div>

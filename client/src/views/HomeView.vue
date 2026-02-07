@@ -18,6 +18,28 @@
         </p>
       </div>
 
+      <!-- API Connection Status Banner -->
+      <div 
+        v-if="!llmStore.isApiConnected"
+        class="mb-6 bg-red-50 border-l-4 border-red-500 p-4 rounded-lg shadow-md max-w-3xl mx-auto"
+      >
+        <div class="flex items-start">
+          <div class="flex-shrink-0">
+            <svg class="w-6 h-6 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          </div>
+          <div class="ml-3 flex-1">
+            <h3 class="text-sm font-semibold text-red-800">
+              Backend API Unavailable
+            </h3>
+            <p class="mt-1 text-sm text-red-700">
+              The backend service is currently unavailable. Please ensure the API server is running to use PromptLab features.
+            </p>
+          </div>
+        </div>
+      </div>
+
     <div class="flex gap-4">
       <button
         @click="animateRocket"
@@ -57,10 +79,10 @@
           </div>
           <div 
             class="px-3 py-1.5 rounded-lg text-sm border"
-            :class="apiConnected ? 'bg-emerald-100 border-emerald-200' : 'bg-red-100 border-red-200'"
+            :class="llmStore.isApiConnected ? 'bg-emerald-100 border-emerald-200' : 'bg-red-100 border-red-200'"
           >
-            <span :class="apiConnected ? 'text-emerald-800' : 'text-red-800'">
-              {{ apiConnected ? '✓ API Connected' : '✗ API Disconnected' }}
+            <span :class="llmStore.isApiConnected ? 'text-emerald-800' : 'text-red-800'">
+              {{ llmStore.isApiConnected ? '✓ API Connected' : '✗ API Disconnected' }}
             </span>
           </div>
         </div>
@@ -70,19 +92,15 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { gsap } from 'gsap'
 import ModelSelection from '@/components/ModelSelection.vue'
 import InputBlock from '@/components/InputBlock.vue'
 import OutputBlock from '@/components/OutputBlock.vue'
-import { useProviderStore } from '@/stores/providerStore'
+import { useLlmStore } from '@/stores/llmStore'
 
 const logoRef = ref<HTMLDivElement>()
-const providerStore = useProviderStore()
-
-const apiConnected = computed(() => {
-  return providerStore.providers.length > 0
-})
+const llmStore = useLlmStore()
 
 const animateLogo = () => {
   if (logoRef.value) {
@@ -106,6 +124,9 @@ const animateLogo = () => {
 }
 
 onMounted(() => {
+  // Start monitoring API connection
+  llmStore.startConnectionMonitoring()
+  
   // Entrance animation
   gsap.fromTo(
     '.grid > *',
@@ -118,6 +139,11 @@ onMounted(() => {
       ease: 'power2.out'
     }
   )
+})
+
+onUnmounted(() => {
+  // Stop monitoring when component is destroyed
+  llmStore.stopConnectionMonitoring()
 })
 </script>
 
