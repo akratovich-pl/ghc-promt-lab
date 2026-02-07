@@ -122,11 +122,47 @@
                 Clear
               </button>
             </div>
+            <!-- Loading State with Animated Pulse -->
             <div 
-              v-if="promptStore.currentResponse"
+              v-if="promptStore.isExecuting"
+              class="p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-lg min-h-[200px] flex flex-col items-center justify-center border border-blue-200"
+            >
+              <div class="relative">
+                <!-- Animated Heartbeat Icon -->
+                <svg 
+                  class="w-16 h-16 text-blue-500 animate-heartbeat"
+                  fill="currentColor" 
+                  viewBox="0 0 24 24"
+                >
+                  <path d="M12 21.35l-1.45-1.32C5.4 15.36 2 12.28 2 8.5 2 5.42 4.42 3 7.5 3c1.74 0 3.41.81 4.5 2.09C13.09 3.81 14.76 3 16.5 3 19.58 3 22 5.42 22 8.5c0 3.78-3.4 6.86-8.55 11.54L12 21.35z"/>
+                </svg>
+                <!-- Pulse Rings -->
+                <div class="absolute inset-0 flex items-center justify-center">
+                  <div class="w-16 h-16 bg-blue-400 rounded-full opacity-75 animate-ping"></div>
+                </div>
+                <div class="absolute inset-0 flex items-center justify-center animation-delay-150">
+                  <div class="w-16 h-16 bg-blue-300 rounded-full opacity-50 animate-ping"></div>
+                </div>
+              </div>
+              <p class="mt-6 text-blue-700 font-medium text-lg">Generating response...</p>
+              <p class="mt-2 text-blue-600 text-sm">Please wait while AI processes your request</p>
+              
+              <!-- Progress Bar -->
+              <div class="w-full max-w-md mt-6">
+                <div class="h-2 bg-blue-200 rounded-full overflow-hidden">
+                  <div class="h-full bg-gradient-to-r from-blue-500 via-indigo-500 to-purple-500 rounded-full animate-progress"></div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- Response Content -->
+            <div 
+              v-else-if="promptStore.currentResponse"
               class="prose prose-sm max-w-none p-4 bg-gray-50 rounded-lg min-h-[200px] text-gray-900 border border-gray-200 markdown-response"
               v-html="renderMarkdown(promptStore.currentResponse)"
             ></div>
+            
+            <!-- Empty State -->
             <div 
               v-else
               class="text-gray-500 italic p-4 bg-gray-50 rounded-lg min-h-[200px] flex items-center justify-center border border-gray-200"
@@ -393,5 +429,39 @@ function getConceptTooltip(key: string) {
 </script>
 
 <style scoped>
-/* No additional styles needed - gradient animation moved to AppHeader component */
+/* Heartbeat animation */
+@keyframes heartbeat {
+  0%, 100% {
+    transform: scale(1);
+  }
+  10%, 30% {
+    transform: scale(1.1);
+  }
+  20%, 40% {
+    transform: scale(1);
+  }
+}
+
+.animate-heartbeat {
+  animation: heartbeat 1.5s ease-in-out infinite;
+}
+
+/* Progress bar animation */
+@keyframes progress {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(100%);
+  }
+}
+
+.animate-progress {
+  animation: progress 1.5s ease-in-out infinite;
+}
+
+/* Animation delay utility */
+.animation-delay-150 {
+  animation-delay: 150ms;
+}
 </style>
