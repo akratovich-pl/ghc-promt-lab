@@ -4,11 +4,14 @@
 > Developed as part of the AI Adoption Program  
 > 
 > **98% of this project's code was implemented using GitHub Copilot**  
+> 
 > Full development history and AI conversation logs: [docs/ai-conversations/](docs/ai-conversations/README.md)
+> 
+> Demo Walkthrough - [Visual demonstration](docs/demo-walkthrough.md)  with screenshots and feature descriptions 
 
 ## Overview
 
-PromptLab is a full-stack web application designed for training and learning how to effectively interact with Large Language Models (LLMs). It provides a comprehensive environment for prompt engineering, AI response analysis, token consumption tracking, and multi-provider comparison. The application enables users to experiment with different AI providers, analyze their responses, and understand the cost implications of various prompting strategies.
+**PromptLab** is a full-stack web application designed for training and learning how to effectively interact with Large Language Models (LLMs). It provides a comprehensive environment for prompt engineering, AI response analysis, token consumption tracking, and multi-provider comparison. The application enables users to experiment with different AI providers, analyze their responses, and understand the cost implications of various prompting strategies.
 
 This project was developed during the **GitHub Copilot Course** as a practical assignment to demonstrate modern software development practices with AI-assisted coding.
 
@@ -245,14 +248,21 @@ The database has been initialized with the following entities:
 
 ## Documentation
 
+### Project Documentation
+- **[Demo Walkthrough](docs/demo-walkthrough.md)** - Visual demonstration with screenshots and feature descriptions
+- **[Project Recap](docs/ai-conversations/project-recap.md)** - Complete project journey, milestones, and achievements
+- **[Lessons Learned](docs/ai-conversations/lessons-learned.md)** - Practical insights from AI-assisted development
+- **[Task Documentation](docs/tasks/README.md)** - Comprehensive task descriptions and implementation phases
+- **[AI Conversation Logs](docs/ai-conversations/README.md)** - Complete development history with all AI sessions
+- **[Layered Architecture](docs/LAYERED_ARCHITECTURE.md)** - Clean Architecture pattern and design decisions
+- **[User Secrets Migration](docs/USER_SECRETS_MIGRATION.md)** - Guide for secure API key management
 
-
-## License
-
-MIT License - See LICENSE file for details
+### Getting Started
+- See [Demo Walkthrough](docs/demo-walkthrough.md) for visual guide
+- Review [Setup Instructions](#setup-instructions) above for local development
 
 ---
 
-**Project Contact**: [Your Name/Organization]  
+**Project Contact**: [Andrey Kratovich]  
 **Course**: GitHub Copilot – AI Adoption Program  
 **Year**: 2026

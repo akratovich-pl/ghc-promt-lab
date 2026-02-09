@@ -1,6 +1,6 @@
 # PromptLab - Interactive Demo Walkthrough
 
-> **Visual Demonstration of AI-Assisted Full-Stack Application**  
+> **Visual Demonstration of 'PromptLab' - AI-Assisted Full-Stack Application**  
 > GitHub Copilot Course – Practical Assignment
 
 ---
@@ -11,12 +11,14 @@
 - [User Journey](#user-journey)
   - [Step 1: Model Selection](#step-1-model-selection)
   - [Step 2: Prompt Lab (Main Interface)](#step-2-prompt-lab-main-interface)
-  - [Step 3: Glossary](#step-3-glossary)
-  - [Step 4: About](#step-4-about)
+  - [Step 3: About](#step-3-about)
+  - [Step 4: Glossary](#step-4-glossary)
 - [Key Features Showcase](#key-features-showcase)
 - [Technical Architecture](#technical-architecture)
 - [AI-Assisted Development Evidence](#ai-assisted-development-evidence)
 - [Performance & Quality](#performance--quality)
+- [Getting Started](#getting-started)
+- [Conclusion](#conclusion)
 
 ---
 
@@ -30,9 +32,6 @@
 - **Architecture**: Clean Architecture (Core → Infrastructure → API)
 
 **Development Achievement**: 98% of code implemented using GitHub Copilot and autonomous coding agents
-
-**Screenshot Placeholder**: [Add overview screenshot of main interface]
-
 ---
 
 ## User Journey
@@ -56,12 +55,25 @@
 4. User selects a specific model (e.g., gemini-1.5-flash, llama3-8b-8192)
 5. User clicks "Continue" to proceed to Prompt Lab
 
-**Screenshots**:
-- ![Model Selection page with provider cards](docs\images\demo\010_Model_selection.png)
-- ![Expanded provider showing model list for Google](docs\images\demo\011_Model_selection_Google_models.png) 
-- ![Expanded provider showing model list for Groq](docs\images\demo\012_Model_selection_Groq_models.png)
-- ![API unavailable warning banner (error state)](docs\images\demo\013_Model_selection_No_connection.png)
----
+<p align="center">
+  <img src="images/demo/010_Model_selection.png" alt="Model Selection page with provider cards" width="600"><br>
+  <em>Model Selection page showing Google Gemini and Groq provider cards with availability status</em>
+</p>
+
+<p align="center">
+  <img src="images/demo/011_Model_selection_Google_models.png" alt="Expanded provider showing model list for Google" width="600"><br>
+  <em>Google Gemini provider expanded, displaying available models</em>
+</p>
+
+<p align="center">
+  <img src="images/demo/012_Model_selection_Groq_models.png" alt="Expanded provider showing model list for Groq" width="600"><br>
+  <em>Groq provider expanded, showing available models</em>
+</p>
+
+<p align="center">
+  <img src="images/demo/013_Model_selection_No_connection.png" alt="API unavailable warning banner" width="600"><br>
+  <em>Error state: Red warning banner displayed when backend API is unavailable</em>
+</p>
 
 ### Step 2: Prompt Lab (Main Interface)
 
@@ -84,6 +96,7 @@
 **Action Buttons**
    - **Execute Prompt**: Primary action button (light blue)
    - **Clear History**: Secondary button to reset conversation
+   - **Change Model**: Navigate back to model selection
 
 **Response Block**:
 - **Loading State**: Animated heartbeat icon with pulsing rings and gradient progress bar
@@ -101,11 +114,25 @@
 - Maintains context for multi-turn conversations
 - Clear visual separation between user prompts and AI responses
 
-**Screenshots**:
-- ![Main page - waitong for response](images\demo\020_Main_page_generating_response.png)
-- ![Main page - response ](images\demo\021_Main_page_response.png)
-- ![Advanced parameters section - tooltips](images\demo\022_Main_page_tooltips.png)
-- ![Conversation history](images\demo\024_Main_page_loading_history.png)
+<p align="center">
+  <img src="images/demo/020_Main_page_generating_response.png" alt="Main page - waiting for response" width="600"><br>
+  <em>Prompt Lab interface with animated loading state (heartbeat icon and progress bar) while AI generates response</em>
+</p>
+
+<p align="center">
+  <img src="images/demo/021_Main_page_response.png" alt="Main page - response" width="600"><br>
+  <em>Completed execution showing markdown-rendered AI response with metrics (tokens, cost, latency)</em>
+</p>
+
+<p align="center">
+  <img src="images/demo/022_Main_page_tooltips.png" alt="Tooltips on hover" width="600"><br>
+  <em>Interactive tooltip displayed on hover, providing educational information about AI/LLM concepts</em>
+</p>
+
+<p align="center">
+  <img src="images/demo/024_Main_page_loading_history.png" alt="Conversation history" width="600"><br>
+  <em>Conversation history panel showing previous prompts and responses with context preservation</em>
+</p>
 
 #### API Connection Monitoring
 
@@ -117,19 +144,21 @@
   - Check network connectivity
 - Automatic retry indicator: "Automatically checking connection every 15 seconds..."
 
-- ![Disabled state when API unavailable](images\demo\024_Main_page_no_connection.png)
+<p align="center">
+  <img src="images/demo/024_Main_page_no_connection.png" alt="Disabled state when API unavailable" width="600"><br>
+  <em>UI disabled with warning banner when backend is unavailable - prompt input is overlaid with connection message</em>
+</p>
 
 #### Complete Workflow Example
 
 **Scenario**: User asks about Python programming
 
 1. User enters prompt: "Explain Python list comprehensions with examples"
-2. Sets temperature to 0.7, max tokens to 500 (not implemented in current version)
-3. Clicks "Execute Prompt"
-4. Loading animation displays (heartbeat + progress bar)
-5. Response appears with formatted code examples
-6. Metrics update: 12 input tokens, 487 output tokens, $0.0015 cost, 2.34s execution time
-7. User can ask follow-up questions maintaining conversation context
+2. Clicks "Execute Prompt"
+3. Loading animation displays (heartbeat + progress bar)
+4. Response appears with formatted code examples
+5. Metrics update: 12 input tokens, 487 output tokens, $0.0015 cost, 2.34s execution time
+6. User can ask follow-up questions maintaining conversation context
 
 
 ### Step 3: About
@@ -145,11 +174,20 @@
 - **AI Assistance Disclosure**: 98% AI-generated code with link to conversation logs
 - **Author Information**: Project creator details
 
-**Screenshots**: 
-- ![About page](images\demo\030_About_page_overall.png)
-- ![About page](images\demo\031_About_page_features.png)
-- ![About page](images\demo\032_About_page_footer.png)
----
+<p align="center">
+  <img src="images/demo/030_About_page_overall.png" alt="About page" width="600"><br>
+  <em>About page header with application description, version 1.1.0, and GitHub Copilot Course context</em>
+</p>
+
+<p align="center">
+  <img src="images/demo/031_About_page_features.png" alt="About page features" width="600"><br>
+  <em>Key features section listing multi-provider support, token counting, conversation history, and educational tooltips</em>
+</p>
+
+<p align="center">
+  <img src="images/demo/032_About_page_footer.png" alt="About page footer" width="600"><br>
+  <em>Technology stack details and footer with repository link and author information</em>
+</p>
 
 ### Step 4: Glossary
 
@@ -159,13 +197,13 @@
 - **Comprehensive Definitions**: 20+ terms explained in detail
 - **Categorized Content**:
   - **Parameters**: Temperature, Top P, Max Tokens, Top K, Frequency/Presence Penalty
-  - **Models**: GPT-4o, GPT-3.5-Turbo, Gemini-1.5-Flash, Gemini-1.5-Pro, Claude 3 family
+  - **Models**: Gemini-1.5-Flash, Gemini-1.5-Pro, Llama3-8b-8192, Mixtral-8x7b-32768
   - **Concepts**: Tokens, Context Window, Prompts, Streaming, Latency
 - **Rich Descriptions**: Each term includes:
   - Clear definition
   - Practical examples
   - Best practices
-  - Links to official documentation (OpenAI, Google, Anthropic)
+  - Links to official documentation (Google, Groq)
 - **Hash Navigation**: Direct links from tooltips (e.g., `/glossary#temperature`)
 - **Professional Layout**: Clean card-based design with consistent spacing
 
@@ -174,10 +212,10 @@
 - Quick reference during prompt crafting
 - Bridges gap between UI controls and underlying concepts
 
-**Screenshots**:
-- ![Glossary page overview](images\demo\040_Glossary_page.png)
-
----
+<p align="center">
+  <img src="images/demo/040_Glossary_page.png" alt="Glossary page overview" width="600"><br>
+  <em>Glossary page with categorized AI/LLM terminology: parameters, models, and concepts with detailed explanations</em>
+</p>
 
 ## Key Features Showcase
 
@@ -188,13 +226,12 @@
 **Architecture**:
 - `ILlmProvider` interface abstraction layer
 - Provider-specific implementations (GoogleGeminiProvider, GroqProvider)
-- Easy addition of new providers (OpenAI, Anthropic, etc.)
+- Extensible design supports adding new providers in the future
 
 **User Benefit**: Compare responses from different providers and models
 
-**Screenshot Placeholder**: [Add model selection showing multiple providers]
+**Current Providers**: Google Gemini, Groq
 
----
 
 ### 2. Real-Time Token Counting & Cost Estimation
 
@@ -207,7 +244,6 @@
 
 **User Benefit**: Budget-aware prompt engineering, understand LLM economics
 
----
 
 ### 3. Conversation History Management
 
@@ -220,7 +256,6 @@
 
 **User Benefit**: Build on previous context, refine ideas through dialogue
 
----
 
 ### 4. Educational Tooltip System
 
@@ -234,7 +269,6 @@
 
 **User Benefit**: Learn while using, reduce learning curve for beginners
 
----
 
 ### 5. Markdown Response Rendering
 
@@ -247,7 +281,6 @@
 
 **User Benefit**: Improved readability, professional presentation of technical content
 
----
 
 ### 6. API Connection Monitoring
 
@@ -261,7 +294,6 @@
 
 **User Benefit**: Clear system status, no confusing errors
 
----
 
 ### 7. Professional UI/UX Design
 
@@ -271,7 +303,6 @@
 - **Unified Components**: Consistent button styling, card layouts
 - **Smooth Animations**: GSAP-powered transitions, heartbeat loading states
 - **Responsive Layout**: Works on desktop and tablet sizes
----
 
 ## Technical Architecture
 
