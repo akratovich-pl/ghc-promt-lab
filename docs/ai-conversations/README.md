@@ -4,6 +4,15 @@ This directory contains structured logs of all AI-assisted development sessions
 for the ghc-promt-lab project. These logs serve as documentation for the 
 Copilot training course.
 
+## 📋 Consolidated Documentation
+
+For quick overview and practical insights, start with these consolidated summaries:
+
+- **[Project Recap](../project-recap.md)** - Complete project journey, milestones, and achievements
+- **[Lessons Learned](../lessons-learned.md)** - Practical insights from AI-assisted development
+
+These documents synthesize all conversation logs below into assessment-ready summaries.
+
 ## Purpose
 
 - Document AI collaboration patterns
@@ -21,6 +30,7 @@ Copilot training course.
 | 2026-02-04 | [Pipeline Pattern and Controller Optimization](2026-02-04-pipeline-pattern-and-controller-optimization.md) | refactoring, pipeline-pattern, task-planning, controller-optimization, architecture | 5 GitHub issues created, 3-stage pipeline designed, controller optimization planned (307→120 lines) |
 | 2026-02-06 | [UI Styling Unification and Feature Implementation](2026-02-06-ui-improvements-and-feature-implementation.md) | frontend, ui-design, implementation, feature-development | Unified button styling, API connection indicator, response clear button, 3 PRs created |
 | 2026-02-07 | [Parallel Provider Fetching and UI Enhancements](2026-02-07-parallel-provider-fetching-and-ui-enhancements.md) | performance, optimization, ui-enhancement, api, backend, frontend | Parallelized provider fetching, API status indicators, animated loading state |
+| 2026-02-09 | [Documentation and Task Organization](2026-02-09-documentation-and-task-organization.md) | documentation, task-management, assessment, readme, organization | Professional README created, 23 task files organized, consistent naming applied |
 
 ## Guidelines
 
