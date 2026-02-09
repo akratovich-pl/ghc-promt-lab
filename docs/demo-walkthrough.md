@@ -17,7 +17,6 @@
 - [Technical Architecture](#technical-architecture)
 - [AI-Assisted Development Evidence](#ai-assisted-development-evidence)
 - [Performance & Quality](#performance--quality)
-- [Getting Started](#getting-started)
 - [Conclusion](#conclusion)
 
 ---
@@ -130,7 +129,7 @@
 </p>
 
 <p align="center">
-  <img src="images/demo/024_Main_page_loading_history.png" alt="Conversation history" width="600"><br>
+  <img src="images/demo/023_Main_page_loading_history.png" alt="Conversation history" width="600"><br>
   <em>Conversation history panel showing previous prompts and responses with context preservation</em>
 </p>
 
@@ -592,48 +591,6 @@ ghc-promt-lab/
 ├── README.md                    # Main project documentation
 └── PromptLab.slnx              # Solution file
 ```
-
----
-
-## Getting Started
-
-### Prerequisites
-- .NET 10 SDK
-- Node.js 18+
-- API keys for Google Gemini and/or Groq
-
-### Quick Start
-
-1. **Clone Repository**
-   ```bash
-   git clone https://github.com/akratovich-pl/ghc-promt-lab.git
-   cd ghc-promt-lab
-   ```
-
-2. **Configure User Secrets** (Backend)
-   ```bash
-   cd src/PromptLab.Api
-   dotnet user-secrets set "Providers:Google:ApiKey" "YOUR_GOOGLE_API_KEY"
-   dotnet user-secrets set "Providers:Groq:ApiKey" "YOUR_GROQ_API_KEY"
-   ```
-
-3. **Run Backend**
-   ```bash
-   dotnet run --project src/PromptLab.Api
-   # Backend starts on http://localhost:5251
-   ```
-
-4. **Run Frontend**
-   ```bash
-   cd client
-   npm install
-   npm run dev
-   # Frontend starts on http://localhost:5173
-   ```
-
-5. **Access Application**
-   - Open browser: http://localhost:5173
-   - Select a model and start prompting!
 
 ---
 

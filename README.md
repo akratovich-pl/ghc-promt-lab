@@ -9,6 +9,23 @@
 > 
 > Demo Walkthrough - [Visual demonstration](docs/demo-walkthrough.md)  with screenshots and feature descriptions 
 
+---
+
+## 📌 Quick Navigation
+
+- [Overview](#overview)
+- [Mission and Purpose](#mission-and-purpose)
+- [Key Features Implemented](#key-features-implemented)
+- [Current Stage](#current-stage)
+- [Planned Improvements / Future Roadmap](#planned-improvements--future-roadmap)
+- [Tech Stack](#tech-stack)
+- [Getting Started](#getting-started)
+- [Usage Example](#usage-example)
+- [Database Migrations](#database-migrations)
+- [Documentation](#documentation)
+
+---
+
 ## Overview
 
 **PromptLab** is a full-stack web application designed for training and learning how to effectively interact with Large Language Models (LLMs). It provides a comprehensive environment for prompt engineering, AI response analysis, token consumption tracking, and multi-provider comparison. The application enables users to experiment with different AI providers, analyze their responses, and understand the cost implications of various prompting strategies.
@@ -128,71 +145,45 @@ The system is stable for development and testing environments. Production deploy
 - **Documentation**: Markdown-based docs with AI conversation logs
 
 
-## Setup and Run Instructions
+## Getting Started
 
 ### Prerequisites
+- .NET 10 SDK
+- Node.js 18+
+- API keys for Google Gemini and/or Groq
 
-Ensure you have the following installed on your system:
-- [.NET 10 SDK](https://dotnet.microsoft.com/download)
-- [Node.js 18+](https://nodejs.org/)
-- [Visual Studio Code](https://code.visualstudio.com/) (recommended)
+### Quick Start
 
-### Backend Setup
+1. **Clone Repository**
+   ```bash
+   git clone https://github.com/akratovich-pl/ghc-promt-lab.git
+   cd ghc-promt-lab
+   ```
 
-1. Navigate to the API project:
-```bash
-cd src/PromptLab.Api
-```
+2. **Configure User Secrets** (Backend)
+   ```bash
+   cd src/PromptLab.Api
+   dotnet user-secrets set "Providers:Google:ApiKey" "YOUR_GOOGLE_API_KEY"
+   dotnet user-secrets set "Providers:Groq:ApiKey" "YOUR_GROQ_API_KEY"
+   ```
 
-2. Set up environment variables for LLM providers:
-```bash
-# For Google Gemini API (required for AI features)
-export GOOGLE_GEMINI_API_KEY="your-api-key-here"
+3. **Run Backend**
+   ```bash
+   dotnet run --project src/PromptLab.Api
+   # Backend starts on http://localhost:5251
+   ```
 
-# On Windows (PowerShell)
-$env:GOOGLE_GEMINI_API_KEY="your-api-key-here"
+4. **Run Frontend**
+   ```bash
+   cd client
+   npm install
+   npm run dev
+   # Frontend starts on http://localhost:5173
+   ```
 
-# On Windows (Command Prompt)
-set GOOGLE_GEMINI_API_KEY=your-api-key-here
-```
-
-**Note**: Never commit API keys to the repository. They must be stored as environment variables.
-
-3. Restore dependencies:
-```bash
-dotnet restore
-```
-
-4. Build the project:
-```bash
-dotnet build
-```
-
-5. Run the API:
-```bash
-dotnet run
-```
-
-The API will be available at `http://localhost:5251`
-
-### Frontend Setup
-
-1. Navigate to the client folder:
-```bash
-cd client
-```
-
-2. Install dependencies:
-```bash
-npm install
-```
-
-3. Run the development server:
-```bash
-npm run dev
-```
-
-The frontend will be available at `http://localhost:5173`
+5. **Access Application**
+   - Open browser: http://localhost:5173
+   - Select a model and start prompting!
 
 ## Usage Example
 
@@ -254,12 +245,12 @@ The database has been initialized with the following entities:
 - **[Lessons Learned](docs/ai-conversations/lessons-learned.md)** - Practical insights from AI-assisted development
 - **[Task Documentation](docs/tasks/README.md)** - Comprehensive task descriptions and implementation phases
 - **[AI Conversation Logs](docs/ai-conversations/README.md)** - Complete development history with all AI sessions
-- **[Layered Architecture](docs/LAYERED_ARCHITECTURE.md)** - Clean Architecture pattern and design decisions
-- **[User Secrets Migration](docs/USER_SECRETS_MIGRATION.md)** - Guide for secure API key management
+- **[User Secrets Migration](docs/development/USER_SECRETS_MIGRATION.md)** - Guide for secure API key management
 
-### Getting Started
-- See [Demo Walkthrough](docs/demo-walkthrough.md) for visual guide
-- Review [Setup Instructions](#setup-instructions) above for local development
+### Additional Resources
+- See [Demo Walkthrough](docs/demo-walkthrough.md) for visual guide with screenshots
+- Review [Getting Started](#getting-started) section above for quick setup
+- Check [User Secrets Migration](docs/USER_SECRETS_MIGRATION.md) for secure API key configuration
 
 ---
 
