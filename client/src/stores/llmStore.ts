@@ -82,17 +82,23 @@ export const useLlmStore = defineStore('llm', () => {
   }
 
   async function checkApiConnection() {
-    if (isCheckingConnection.value) return
+    if (isCheckingConnection.value) {
+      console.log('[LLM Store] ⏭️ Skipping check - already checking')
+      return
+    }
     
     isCheckingConnection.value = true
+    console.log('[LLM Store] Checking API connection...')
     try {
       await api.get('/providers')
       isApiConnected.value = true
+      console.log('[LLM Store] ✅ API is connected')
     } catch (err) {
       isApiConnected.value = false
-      console.warn('API connection check failed:', err)
+      console.warn('[LLM Store] ❌ API connection check failed:', err)
     } finally {
       isCheckingConnection.value = false
+      console.log('[LLM Store] Current isApiConnected state:', isApiConnected.value)
     }
   }
 
@@ -100,6 +106,9 @@ export const useLlmStore = defineStore('llm', () => {
   let connectionCheckInterval: number | null = null
   
   function startConnectionMonitoring() {
+    console.log('[LLM Store] 🔄 Starting connection monitoring')
+    // Reset checking flag in case it was stuck from previous session
+    isCheckingConnection.value = false
     // Initial check
     checkApiConnection()
     
@@ -108,6 +117,7 @@ export const useLlmStore = defineStore('llm', () => {
       connectionCheckInterval = window.setInterval(() => {
         checkApiConnection()
       }, 15000)
+      console.log('[LLM Store] ⏰ Connection check interval started (15s)')
     }
   }
 
@@ -138,5 +148,8 @@ export const useLlmStore = defineStore('llm', () => {
     stopConnectionMonitoring
   }
 }, {
-  persist: true
+  persist: {
+    // Persist everything except connection status (should be checked on mount)
+    paths: ['providers', 'selectedModel']
+  }
 })
